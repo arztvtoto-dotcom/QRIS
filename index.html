@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dashboard Selisih QRIS - Ultimate Design</title>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- SheetJS (Excel) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Font Awesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+  :root {
+    --primary: #6366f1;
+    --secondary: #a855f7;
+    --accent: #ec4899;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --dark-bg: #0f172a;
+    --glass-bg: rgba(30, 41, 59, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+  
+  html, body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--dark-bg);
+    color: var(--text-main);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* --- Background Animation --- */
+  #bgCanvas {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* --- Glass Panel Component --- */
+  .glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+  }
+
+  .glass-panel:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+    padding-bottom: 100px; /* Space for bottom drawer if needed */
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .header-actions { display: flex; gap: 10px; }
+
+  /* --- Buttons --- */
+  .btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .btn-gradient {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  }
+  .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4); }
+
+  .btn-glass {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .btn-glass:hover { background: rgba(255, 255, 255, 0.1); }
+
+  /* --- Inputs --- */
+  .input-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 768px) { .input-section { grid-template-columns: 1fr; } }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  textarea, input, select {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 12px;
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    transition: border-color 0.3s;
+  }
+
+  textarea {
+    height: 120px;
+    resize: none; /* Kunci ukuran */
+    font-size: 0.85rem;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--primary);
+  }
+
+  /* --- Stats Cards --- */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card h3 {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .stat-card .value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* --- Dashboard Layout --- */
+  .dashboard-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 900px) { .dashboard-row { grid-template-columns: 1fr; } }
+
+  /* --- Table Styling --- */
+  .table-wrapper {
+    max-height: 350px; /* Agar tidak panjang scroll halaman */
+    overflow-y: auto;
+    border-radius: 12px;
+    position: relative;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.85rem;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    background: rgba(15, 23, 42, 0.95);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--glass-border);
+    z-index: 10;
+  }
+
+  tbody tr {
+    transition: background 0.2s;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  }
+  tbody tr:hover { background: rgba(255, 255, 255, 0.05); }
+  tbody td { padding: 10px 12px; }
+
+  .text-right { text-align: right; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* --- Badges & Alerts --- */
+  .badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .badge-success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+  .badge-warning { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+  .badge-danger  { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+  .custom-alert {
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 4px solid;
+    font-size: 0.9rem;
+  }
+  .alert-success { background: rgba(16, 185, 129, 0.1); border-color: var(--success); color: #6ee7b7; }
+  .alert-danger { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: #fca5a5; }
+  .alert-warning { background: rgba(245, 158, 11, 0.1); border-color: var(--warning); color: #fcd34d; }
+
+  /* --- Detail Drawer --- */
+  .detail-drawer {
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    width: 100%;
+    background: #1e293b;
+    border-top: 1px solid var(--glass-border);
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    padding: 20px;
+    z-index: 200;
+    transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(20px);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+  }
+
+  .detail-drawer.active {
+    bottom: 0;
+  }
+
+  .close-drawer {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hidden { display: none !important; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<div class="container">
+  <header>
+    <div>
+      <h1>QRIS <span style="font-weight: 300; opacity: 0.8;">Reconciler</span></h1>
+      <p style="color: var(--text-muted); font-size: 0.85rem;">System Settlement Dashboard</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-glass" onclick="exportExcel()" id="btnExcel" style="display:none">
+        <i class="fa-solid fa-file-excel"></i> Excel
+      </button>
+      <button class="btn btn-glass" onclick="exportCSV()" id="btnCSV" style="display:none">
+        <i class="fa-solid fa-file-csv"></i> CSV
+      </button>
+      <button class="btn btn-glass" onclick="exportPDF()" id="btnPDF" style="display:none">
+        <i class="fa-solid fa-file-pdf"></i> PDF
+      </button>
+    </div>
+  </header>
+
+  <div class="input-section">
+    <div class="glass-panel" style="padding: 20px;">
+      <div class="form-group">
+        <label><i class="fa-solid fa-server"></i> Data Admin</label>
+        <textarea id="adminData" placeholder="OrderID Nominal&#10;Contoh: Mineral001 160000">Mineral001 160000
+Mineral002 175000
+Mineral004 200000</textarea>
+      </div>
+    </div>
+
+    <div class="glass-panel" style="padding: 20px;">
+      <div class="form-group">
+        <label><i class="fa-solid fa-qrcode"></i> Data QRIS</label>
+        <textarea id="qrisData" placeholder="OrderID Nominal&#10;Contoh: Mineral002 175000">Mineral001 160000
+Mineral003 180000
+Mineral004 200000</textarea>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align: center; margin-bottom: 20px;">
+    <button class="btn btn-gradient" onclick="generateDashboard()">
+      <i class="fa-solid fa-bolt"></i> Proses Analisis
+    </button>
+  </div>
+
+  <div id="dashboardContent" class="hidden">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="glass-panel stat-card">
+        <h3>Total Pendapatan</h3>
+        <div class="value" style="color: #a855f7;" id="statRevenue">Rp 0</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);"><i class="fa-solid fa-chart-line"></i> Estimasi Bersih</div>
+      </div>
+      <div class="glass-panel stat-card">
+        <h3>Status KLOP</h3>
+        <div class="value" style="color: var(--success);" id="statMatch">0</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);"><i class="fa-solid fa-check-circle"></i> Transaksi Aman</div>
+      </div>
+      <div class="glass-panel stat-card">
+        <h3>Total Selisih</h3>
+        <div class="value" style="color: var(--danger);" id="statDiff">Rp 0</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);"><i class="fa-solid fa-triangle-exclamation"></i> Potensi Kerugian</div>
+      </div>
+      <div class="glass-panel stat-card">
+        <h3>Biaya MDR</h3>
+        <div class="value" style="color: var(--warning);" id="statMDR">Rp 0</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">0.7% (Estimasi)</div>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div id="alertSection"></div>
+
+    <div class="dashboard-row">
+      <!-- Chart -->
+      <div class="glass-panel" style="padding: 20px;">
+        <h3 style="margin-bottom: 15px; font-weight: 600;">Visualisasi Data</h3>
+        <div style="height: 200px; position: relative;">
+          <canvas id="statusChart"></canvas>
+        </div>
+      </div>
+      
+      <!-- Filters -->
+      <div class="glass-panel" style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+        <h3 style="font-weight: 600;">Filter Canggih</h3>
+        
+        <div class="form-group">
+          <label style="font-size: 0.8rem;">Cari Order ID</label>
+          <input type="search" id="searchOrderId" class="input-control" placeholder="Ketik ID..." oninput="applyFilters()">
+        </div>
+
+        <div class="form-group">
+          <label style="font-size: 0.8rem;">Range Nominal (Rp)</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="number" id="minNominal" class="input-control" placeholder="Min" oninput="applyFilters()">
+            <input type="number" id="maxNominal" class="input-control" placeholder="Max" oninput="applyFilters()">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label style="font-size: 0.8rem;">Status Transaksi</label>
+          <select id="statusFilter" class="input-control" onchange="applyFilters()">
+            <option value="all">Semua Status</option>
+            <option value="KLOP">KLOP</option>
+            <option value="BEDA">BEDA (Selisih)</option>
+            <option value="HILANG DI QRIS">Missing QRIS</option>
+            <option value="HILANG DI ADMIN">Missing Admin</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="glass-panel" style="padding: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+        <div style="font-weight: 600;">Laporan Transaksi</div>
+        <div style="font-size: 0.85rem; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px;">
+          Total Selisih: <span id="totalSelisihDisplay" class="mono" style="color: var(--accent); font-weight: bold;">Rp 0</span>
+        </div>
+      </div>
+      
+      <div class="table-wrapper">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th class="text-right">Admin</th>
+              <th class="text-right">QRIS</th>
+              <th class="text-right">Selisih</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- Data akan diisi di sini -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Drawer -->
+<div class="detail-drawer" id="detailDrawer">
+  <button class="close-drawer" onclick="closeDrawer()"><i class="fa-solid fa-xmark"></i></button>
+  <div style="max-width: 1000px; margin: 0 auto;">
+    <h2 style="margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+      Detail: <span id="drawerOrderId" class="mono" style="color: var(--primary);"></span>
+    </h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+      <div class="glass-panel" style="padding: 15px; background: rgba(255,255,255,0.03);">
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px;">Nominal Admin</div>
+        <div id="drawerAdmin" class="mono" style="font-size: 1.2rem; color: white;">-</div>
+      </div>
+      <div class="glass-panel" style="padding: 15px; background: rgba(255,255,255,0.03);">
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px;">Nominal QRIS</div>
+        <div id="drawerQris" class="mono" style="font-size: 1.2rem; color: white;">-</div>
+      </div>
+      <div class="glass-panel" style="padding: 15px; background: rgba(255,255,255,0.03);">
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px;">Selisih</div>
+        <div id="drawerDiff" class="mono" style="font-size: 1.2rem; color: var(--danger);">-</div>
+      </div>
+    </div>
+    <div style="margin-top: 15px; text-align: right;">
+        <button class="btn btn-glass" onclick="closeDrawer()">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- 1. Background Animation Logic ---
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+let particles = [];
+
+function resize() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+}
+
+class Particle {
+  constructor() {
+    this.x = Math.random() * width;
+    this.y = Math.random() * height;
+    this.vx = (Math.random() - 0.5) * 0.4;
+    this.vy = (Math.random() - 0.5) * 0.4;
+    this.size = Math.random() * 2 + 1;
+    this.color = `rgba(148, 163, 184, ${Math.random() * 0.3})`;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.x < 0) this.x = width;
+    if (this.x > width) this.x = 0;
+    if (this.y < 0) this.y = height;
+    if (this.y > height) this.y = 0;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+  }
+}
+
+function initParticles() {
+  particles = [];
+  for (let i = 0; i < 40; i++) {
+    particles.push(new Particle());
+  }
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, width, height);
+  particles.forEach(p => {
+    p.update();
+    p.draw();
+  });
+  requestAnimationFrame(animateParticles);
+}
+
+window.addEventListener('resize', resize);
+resize();
+initParticles();
+animateParticles();
+
+// --- 2. LOGIC TIDAK DIUBAH (MENGGUNAKAN FORMAT SPASI) ---
+let chartInstance = null;
+let dashboardData = [];
+
+function formatCurrency(amount) {
+  if (amount === null || isNaN(amount)) return '-';
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0
+  }).format(amount);
+}
+
+// PARSING DATA (MASIH MENGGUNAKAN SPASI)
+function parseDataInput(text) {
+  return text.trim().split('\n').filter(line => line.trim()).map(line => {
+    const parts = line.trim().split(/\s+/);
+    const orderId = parts[0].toUpperCase();
+    const amount = parseFloat(parts.slice(1).join('').replace(/[^0-9.]/g, '')) || 0;
+    return { orderId, amount };
+  });
+}
+
+function generateDashboard() {
+  document.getElementById('dashboardContent').classList.remove('hidden');
+  
+  // Scroll smooth hanya jika dashboard belum terlihat
+  const dash = document.getElementById('dashboardContent');
+  if (!dash.classList.contains('scrolled')) {
+      setTimeout(() => {
+          dash.scrollIntoView({behavior: 'smooth', block: 'start'});
+          dash.classList.add('scrolled');
+      }, 100);
+  }
+
+  const adminEntries = parseDataInput(document.getElementById('adminData').value);
+  const qrisEntries = parseDataInput(document.getElementById('qrisData').value);
+
+  const adminMap = new Map(adminEntries.map(e => [e.orderId, e.amount]));
+  const qrisMap = new Map(qrisEntries.map(e => [e.orderId, e.amount]));
+
+  const allOrderIds = new Set([...adminMap.keys(), ...qrisMap.keys()]);
+
+  dashboardData = [];
+  allOrderIds.forEach(orderId => {
+    const adminAmount = adminMap.get(orderId) ?? null;
+    const qrisAmount = qrisMap.get(orderId) ?? null;
+
+    let status, selisih = null;
+
+    if (adminAmount !== null && qrisAmount !== null) {
+      selisih = adminAmount - qrisAmount;
+      status = adminAmount === qrisAmount ? 'KLOP' : 'BEDA';
+    } else if (adminAmount !== null) {
+      status = 'HILANG DI QRIS';
+    } else {
+      status = 'HILANG DI ADMIN';
+    }
+
+    dashboardData.push({ orderId, adminAmount, qrisAmount, selisih, status });
+  });
+
+  dashboardData.sort((a, b) => {
+    const priority = { 'HILANG DI QRIS': 1, 'HILANG DI ADMIN': 1, 'BEDA': 2, 'KLOP': 3 };
+    return (priority[a.status] || 99) - (priority[b.status] || 99);
+  });
+
+  renderDashboard(qrisEntries);
+}
+
+function renderDashboard(qrisEntries) {
+  const klop = dashboardData.filter(e => e.status === 'KLOP').length;
+  const beda = dashboardData.filter(e => e.status === 'BEDA').length;
+  const hilangQris = dashboardData.filter(e => e.status === 'HILANG DI QRIS').length;
+  const hilangAdmin = dashboardData.filter(e => e.status === 'HILANG DI ADMIN').length;
+
+  const totalPendapatan = qrisEntries.reduce((sum, e) => sum + e.amount, 0);
+  const biayaQris = totalPendapatan * 0.007; 
+
+  const totalSelisih = dashboardData.reduce((sum, e) => {
+    if (e.status === 'BEDA' && e.selisih !== null) return sum + Math.abs(e.selisih);
+    if (e.status === 'HILANG DI QRIS' && e.adminAmount !== null) return sum + e.adminAmount;
+    if (e.status === 'HILANG DI ADMIN' && e.qrisAmount !== null) return sum + e.qrisAmount;
+    return sum;
+  }, 0);
+
+  document.getElementById('statRevenue').textContent = formatCurrency(totalPendapatan);
+  document.getElementById('statMatch').textContent = klop;
+  document.getElementById('statDiff').textContent = formatCurrency(totalSelisih);
+  document.getElementById('statMDR').textContent = formatCurrency(biayaQris);
+
+  const missingInQris = dashboardData.filter(e => e.status === 'HILANG DI QRIS');
+  const largeDiscrepancy = dashboardData.filter(e => e.status === 'BEDA' && Math.abs(e.selisih) > 10000);
+
+  let alertHTML = '';
+  
+  if (missingInQris.length > 0) {
+    alertHTML += `
+      <div class="custom-alert alert-danger">
+        <i class="fa-solid fa-circle-xmark"></i>
+        <div>
+          <strong>${missingInQris.length} Data Hilang di QRIS</strong>
+        </div>
+      </div>`;
+  }
+
+  if (largeDiscrepancy.length > 0) {
+    alertHTML += `
+      <div class="custom-alert alert-warning">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div>
+          <strong>${largeDiscrepancy.length} Transaksi Selisih Besar</strong>
+        </div>
+      </div>`;
+  }
+
+  if (!alertHTML) {
+    alertHTML = `
+      <div class="custom-alert alert-success">
+        <i class="fa-solid fa-circle-check"></i>
+        <div><strong>Semua Sistem Normal</strong></div>
+      </div>`;
+  }
+  document.getElementById('alertSection').innerHTML = alertHTML;
+
+  renderChart(klop, beda, hilangQris, hilangAdmin);
+  
+  document.getElementById('btnCSV').style.display = 'inline-flex';
+  document.getElementById('btnPDF').style.display = 'inline-flex';
+  document.getElementById('btnExcel').style.display = 'inline-flex';
+
+  applyFilters();
+}
+
+function renderChart(klop, beda, hilangQris, hilangAdmin) {
+  const ctx = document.getElementById('statusChart').getContext('2d');
+  
+  if (chartInstance) chartInstance.destroy();
+
+  const gradientSuccess = ctx.createLinearGradient(0, 0, 0, 400);
+  gradientSuccess.addColorStop(0, 'rgba(16, 185, 129, 0.8)');
+  gradientSuccess.addColorStop(1, 'rgba(16, 185, 129, 0.2)');
+
+  const gradientDanger = ctx.createLinearGradient(0, 0, 0, 400);
+  gradientDanger.addColorStop(0, 'rgba(239, 68, 68, 0.8)');
+  gradientDanger.addColorStop(1, 'rgba(239, 68, 68, 0.2)');
+
+  chartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['KLOP', 'BEDA', 'HILANG'],
+      datasets: [{
+        data: [klop, beda, hilangQris + hilangAdmin],
+        backgroundColor: [
+          gradientSuccess,
+          'rgba(245, 158, 11, 0.8)',
+          gradientDanger
+        ],
+        borderWidth: 0,
+        hoverOffset: 10
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 10 } }
+      },
+      cutout: '70%',
+    }
+  });
+}
+
+function applyFilters() {
+  const searchTerm = document.getElementById('searchOrderId').value.toUpperCase();
+  const minNom = parseFloat(document.getElementById('minNominal').value) || null;
+  const maxNom = parseFloat(document.getElementById('maxNominal').value) || null;
+  const statusFilter = document.getElementById('statusFilter').value;
+
+  const filtered = dashboardData.filter(entry => {
+    if (searchTerm && !entry.orderId.includes(searchTerm)) return false;
+    if (statusFilter !== 'all' && entry.status !== statusFilter) return false;
+    
+    const amount = entry.adminAmount ?? entry.qrisAmount ?? 0;
+    if (minNom !== null && amount < minNom) return false;
+    if (maxNom !== null && amount > maxNom) return false;
+    
+    return true;
+  });
+
+  const totalSelisih = filtered.reduce((sum, e) => {
+    if (e.status === 'BEDA' && e.selisih !== null) return sum + Math.abs(e.selisih);
+    if (e.status === 'HILANG DI QRIS' && e.adminAmount !== null) return sum + e.adminAmount;
+    if (e.status === 'HILANG DI ADMIN' && e.qrisAmount !== null) return sum + e.qrisAmount;
+    return sum;
+  }, 0);
+
+  document.getElementById('totalSelisihDisplay').textContent = formatCurrency(totalSelisih);
+
+  let tableHTML = '';
+  if (filtered.length === 0) {
+    tableHTML = `<tr><td colspan="5" class="text-center" style="padding: 40px; color: var(--text-muted);">Data tidak ditemukan</td></tr>`;
+  } else {
+    filtered.forEach(entry => {
+      let badgeClass = 'badge-success';
+      
+      if (entry.status === 'BEDA') { badgeClass = 'badge-warning'; }
+      if (entry.status.includes('HILANG')) { badgeClass = 'badge-danger'; }
+
+      tableHTML += `
+        <tr onclick="openDrawer('${entry.orderId}')">
+          <td class="mono" style="font-weight: 500;">${entry.orderId}</td>
+          <td class="text-right mono">${entry.adminAmount !== null ? formatCurrency(entry.adminAmount) : '-'}</td>
+          <td class="text-right mono">${entry.qrisAmount !== null ? formatCurrency(entry.qrisAmount) : '-'}</td>
+          <td class="text-right mono" style="color: ${entry.selisih < 0 ? '#f87171' : (entry.selisih > 0 ? '#fbbf24' : 'inherit')}">
+            ${entry.selisih !== null ? formatCurrency(entry.selisih) : '-'}
+          </td>
+          <td class="text-center"><span class="badge ${badgeClass}">${entry.status}</span></td>
+        </tr>
+      `;
+    });
+  }
+
+  document.getElementById('tableBody').innerHTML = tableHTML;
+}
+
+// --- 3. Interactive Features (Drawer) ---
+
+function openDrawer(orderId) {
+  const entry = dashboardData.find(e => e.orderId === orderId);
+  if (!entry) return;
+
+  document.getElementById('drawerOrderId').textContent = entry.orderId;
+  document.getElementById('drawerAdmin').textContent = entry.adminAmount !== null ? formatCurrency(entry.adminAmount) : 'Tidak Ada';
+  document.getElementById('drawerQris').textContent = entry.qrisAmount !== null ? formatCurrency(entry.qrisAmount) : 'Tidak Ada';
+  document.getElementById('drawerDiff').textContent = entry.selisih !== null ? formatCurrency(entry.selisih) : '-';
+  
+  document.getElementById('detailDrawer').classList.add('active');
+}
+
+function closeDrawer() {
+  document.getElementById('detailDrawer').classList.remove('active');
+}
+
+document.addEventListener('click', function(event) {
+  const drawer = document.getElementById('detailDrawer');
+  // Close jika klik di luar drawer dan bukan di tabel
+  if (!drawer.contains(event.target) && !event.target.closest('tr')) {
+    closeDrawer();
+  }
+});
+
+// --- 4. Export Functions (Excel, CSV, PDF) ---
+
+function exportCSV() {
+  let csv = 'Order ID,Admin,QRIS,Selisih,Status\n';
+  dashboardData.forEach(entry => {
+    csv += `${entry.orderId},${entry.adminAmount ?? '-'},${entry.qrisAmount ?? '-'},${entry.selisih ?? '-'},${entry.status}\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `Laporan-QRIS-${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+}
+
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(99, 102, 241); 
+  doc.text('Laporan Rekonsiliasi QRIS', 14, 20);
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Tanggal: ${new Date().toLocaleString('id-ID')}`, 14, 28);
+
+  let y = 40;
+  const klop = dashboardData.filter(e => e.status === 'KLOP').length;
+  const beda = dashboardData.filter(e => e.status === 'BEDA').length;
+  const hilang = dashboardData.filter(e => e.status.includes('HILANG')).length;
+
+  doc.text(`KLOP: ${klop} | BEDA: ${beda} | MISSING: ${hilang}`, 14, y);
+  y += 15;
+
+  doc.text('Detail Transaksi:', 14, y);
+  y += 10;
+
+  dashboardData.slice(0, 30).forEach(entry => {
+    doc.text(`${entry.orderId} | ${entry.adminAmount} | ${entry.qrisAmount} | ${entry.status}`, 14, y);
+    y += 6;
+    if(y > 270) { doc.addPage(); y = 20; }
+  });
+
+  doc.save(`Rekon-QRIS-${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+function exportExcel() {
+  const ws = XLSX.utils.json_to_sheet(dashboardData.map(e => ({
+    "Order ID": e.orderId,
+    "Nominal Admin": e.adminAmount,
+    "Nominal QRIS": e.qrisAmount,
+    "Selisih": e.selisih,
+    "Status": e.status
+  })));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Rekonsiliasi");
+  XLSX.writeFile(wb, `Data-QRIS-${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+</script>
+</body>
+</html>
