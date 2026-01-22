@@ -70,7 +70,7 @@
     padding: 20px;
     position: relative;
     z-index: 1;
-    padding-bottom: 100px; /* Space for bottom drawer if needed */
+    padding-bottom: 100px;
   }
 
   header {
@@ -148,7 +148,7 @@
 
   textarea {
     height: 120px;
-    resize: none; /* Kunci ukuran */
+    resize: none;
     font-size: 0.85rem;
   }
 
@@ -195,7 +195,7 @@
 
   /* --- Table Styling --- */
   .table-wrapper {
-    max-height: 350px; /* Agar tidak panjang scroll halaman */
+    max-height: 350px;
     overflow-y: auto;
     border-radius: 12px;
     position: relative;
@@ -330,18 +330,18 @@
     <div class="glass-panel" style="padding: 20px;">
       <div class="form-group">
         <label><i class="fa-solid fa-server"></i> Data Admin</label>
-        <textarea id="adminData" placeholder="OrderID Nominal&#10;Contoh: Mineral001 160000">Mineral001 160000
-Mineral002 175000
-Mineral004 200000</textarea>
+        <textarea id="adminData" placeholder="OrderID Nominal&#10;Contoh: Minera 160000">Minera001 160000
+Minera002 175000
+Minera004 200000</textarea>
       </div>
     </div>
 
     <div class="glass-panel" style="padding: 20px;">
       <div class="form-group">
         <label><i class="fa-solid fa-qrcode"></i> Data QRIS</label>
-        <textarea id="qrisData" placeholder="OrderID Nominal&#10;Contoh: Mineral002 175000">Mineral001 160000
-Mineral003 180000
-Mineral004 200000</textarea>
+        <textarea id="qrisData" placeholder="OrderID Nominal&#10;Contoh: Minera002 175000">Minera001 160000
+Minera003 180000
+Minera004 200000</textarea>
       </div>
     </div>
   </div>
@@ -398,7 +398,7 @@ Mineral004 200000</textarea>
           <input type="search" id="searchOrderId" class="input-control" placeholder="Ketik ID..." oninput="applyFilters()">
         </div>
 
-        <div class="form-group">
+        <div class="font-group">
           <label style="font-size: 0.8rem;">Range Nominal (Rp)</label>
           <div style="display: flex; gap: 10px;">
             <input type="number" id="minNominal" class="input-control" placeholder="Min" oninput="applyFilters()">
@@ -550,7 +550,8 @@ function formatCurrency(amount) {
 function parseDataInput(text) {
   return text.trim().split('\n').filter(line => line.trim()).map(line => {
     const parts = line.trim().split(/\s+/);
-    const orderId = parts[0].toUpperCase();
+    // PERUBAHAN: Hapus .toUpperCase() agar teks asli tetap sama (Case Sensitive)
+    const orderId = parts[0]; 
     const amount = parseFloat(parts.slice(1).join('').replace(/[^0-9.]/g, '')) || 0;
     return { orderId, amount };
   });
@@ -559,7 +560,6 @@ function parseDataInput(text) {
 function generateDashboard() {
   document.getElementById('dashboardContent').classList.remove('hidden');
   
-  // Scroll smooth hanya jika dashboard belum terlihat
   const dash = document.getElementById('dashboardContent');
   if (!dash.classList.contains('scrolled')) {
       setTimeout(() => {
@@ -707,7 +707,7 @@ function renderChart(klop, beda, hilangQris, hilangAdmin) {
 }
 
 function applyFilters() {
-  const searchTerm = document.getElementById('searchOrderId').value.toUpperCase();
+  const searchTerm = document.getElementById('searchOrderId').value; // Hapus toUpperCase di sini juga
   const minNom = parseFloat(document.getElementById('minNominal').value) || null;
   const maxNom = parseFloat(document.getElementById('maxNominal').value) || null;
   const statusFilter = document.getElementById('statusFilter').value;
