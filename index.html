@@ -532,7 +532,7 @@
 <div class="container">
   <header>
     <div>
-      <h1>QRIS TVTOTO </h1>
+      <h1>QRIS RECONCILER</h1>
       <div class="ornament"></div>
       <p class="subtitle">TVTOTO ARZ</p>
     </div>
@@ -815,8 +815,10 @@ function generateDashboard() {
       status = adminAmount === qrisAmount ? 'KLOP' : 'BEDA';
     } else if (adminAmount !== null) {
       status = 'HILANG DI QRIS';
+      selisih = adminAmount; // Hitung sebagai selisih positif (kehilangan)
     } else {
       status = 'HILANG DI ADMIN';
+      selisih = -qrisAmount; // Hitung sebagai selisih negatif (kelebihan)
     }
 
     dashboardData.push({ orderId, adminAmount, qrisAmount, selisih, status });
