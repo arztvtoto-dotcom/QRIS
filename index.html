@@ -1,19 +1,13 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Dashboard Selisih QRIS - Luxury Edition</title>
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- SheetJS (Excel) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Cormorant+Garamond:wght@300;400;500;600;700&family=Cinzel:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- Font Awesome Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
@@ -32,6 +26,10 @@
     --text-gold: #F4D03F;
     --text-pale-gold: #FFF8DC;
     --text-cream: #F5E6D3;
+    --neon-cyan: #00f5ff;
+    --neon-cyan-dim: rgba(0,245,255,0.15);
+    --neon-green: #39ff14;
+    --neon-green-dim: rgba(57,255,20,0.15);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
@@ -47,482 +45,671 @@
 
   body::before {
     content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: 
-      radial-gradient(circle at 20% 20%, rgba(212, 175, 55, 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(122, 22, 22, 0.05) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
+      radial-gradient(circle at 20% 20%, rgba(212,175,55,0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(122,22,22,0.05) 0%, transparent 50%);
+    pointer-events: none; z-index: 0;
   }
 
-  /* --- Background Animation --- */
   #bgCanvas {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.4;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0; pointer-events: none; opacity: 0.4;
   }
 
-  /* --- Luxury Glass Panel --- */
   .glass-panel {
-    background: linear-gradient(135deg, rgba(92, 10, 10, 0.3) 0%, rgba(122, 22, 22, 0.2) 100%);
+    background: linear-gradient(135deg, rgba(92,10,10,0.3) 0%, rgba(122,22,22,0.2) 100%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 2px solid;
     border-image: linear-gradient(135deg, var(--gold-rich), var(--gold-light), var(--gold-rich)) 1;
-    box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.5),
-      inset 0 1px 0 rgba(212, 175, 55, 0.1),
-      0 0 40px rgba(212, 175, 55, 0.05);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(212,175,55,0.1), 0 0 40px rgba(212,175,55,0.05);
+    transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+    position: relative; overflow: hidden;
   }
 
   .glass-panel::before {
     content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.1), transparent);
+    position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.1), transparent);
     transition: left 0.6s;
   }
 
-  .glass-panel:hover::before {
-    left: 100%;
-  }
-
+  .glass-panel:hover::before { left: 100%; }
   .glass-panel:hover {
     border-image: linear-gradient(135deg, var(--gold-light), var(--gold-pale), var(--gold-light)) 1;
-    box-shadow: 
-      0 12px 48px rgba(0, 0, 0, 0.6),
-      inset 0 1px 0 rgba(212, 175, 55, 0.2),
-      0 0 60px rgba(212, 175, 55, 0.15);
+    box-shadow: 0 12px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(212,175,55,0.2), 0 0 60px rgba(212,175,55,0.15);
     transform: translateY(-4px);
   }
 
   .container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 30px;
-    position: relative;
-    z-index: 1;
-    padding-bottom: 120px;
+    max-width: 1400px; margin: 0 auto; padding: 30px;
+    position: relative; z-index: 1; padding-bottom: 120px;
   }
 
   header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 40px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-bottom: 0; padding-bottom: 24px;
+    border-bottom: 2px solid rgba(212,175,55,0.2);
   }
 
   h1 {
-    font-family: 'Cinzel', serif;
-    font-size: 3rem;
-    font-weight: 800;
+    font-family: 'Cinzel', serif; font-size: 3rem; font-weight: 800;
     background: linear-gradient(135deg, var(--gold-rich) 0%, var(--gold-light) 50%, var(--gold-pale) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
-    letter-spacing: 2px;
-    position: relative;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px rgba(212,175,55,0.3); letter-spacing: 2px; position: relative;
   }
 
   h1::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 0;
-    width: 60px;
-    height: 3px;
+    content: ''; position: absolute; bottom: -10px; left: 0;
+    width: 60px; height: 3px;
     background: linear-gradient(90deg, var(--gold-rich), transparent);
   }
 
   .subtitle {
-    font-family: 'Playfair Display', serif;
-    color: var(--text-gold);
-    font-size: 1.1rem;
-    font-weight: 500;
-    margin-top: 8px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
+    font-family: 'Playfair Display', serif; color: var(--text-gold);
+    font-size: 1.1rem; font-weight: 500; margin-top: 8px;
+    letter-spacing: 3px; text-transform: uppercase;
   }
 
-  .header-actions { display: flex; gap: 12px; }
+  .header-actions { display: flex; gap: 12px; flex-wrap: wrap; }
 
-  /* --- Luxury Buttons --- */
+  /* --- Tabs --- */
+  .tab-bar {
+    display: flex; gap: 0; margin-bottom: 30px;
+    border-bottom: 2px solid rgba(212,175,55,0.2);
+  }
+
+  .tab-btn {
+    padding: 14px 28px; border: none; background: transparent;
+    color: rgba(212,175,55,0.5); font-family: 'Cinzel', serif;
+    font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.3s; position: relative;
+    border-bottom: 3px solid transparent; margin-bottom: -2px;
+  }
+
+  .tab-btn.active {
+    color: var(--gold-light);
+    border-bottom: 3px solid var(--gold-rich);
+    background: linear-gradient(180deg, rgba(212,175,55,0.05), transparent);
+  }
+
+  .tab-btn:hover { color: var(--gold-light); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* --- Buttons --- */
   .btn {
-    padding: 12px 24px;
-    border: 2px solid var(--gold-rich);
-    border-radius: 2px;
-    font-weight: 600;
-    font-family: 'Cinzel', serif;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--text-gold);
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-    background: linear-gradient(135deg, rgba(92, 10, 10, 0.5), rgba(122, 22, 22, 0.3));
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    position: relative;
-    overflow: hidden;
+    padding: 12px 24px; border: 2px solid var(--gold-rich); border-radius: 2px;
+    font-weight: 600; font-family: 'Cinzel', serif; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 10px; color: var(--text-gold);
+    font-size: 0.9rem; transition: all 0.3s ease;
+    background: linear-gradient(135deg, rgba(92,10,10,0.5), rgba(122,22,22,0.3));
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3); letter-spacing: 1px;
+    text-transform: uppercase; position: relative; overflow: hidden;
   }
 
   .btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(212, 175, 55, 0.2);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
+    content: ''; position: absolute; top: 50%; left: 50%;
+    width: 0; height: 0; border-radius: 50%;
+    background: rgba(212,175,55,0.2);
+    transform: translate(-50%,-50%); transition: width 0.6s, height 0.6s;
   }
 
-  .btn:hover::before {
-    width: 300px;
-    height: 300px;
-  }
-
+  .btn:hover::before { width: 300px; height: 300px; }
   .btn:hover {
-    border-color: var(--gold-light);
-    box-shadow: 0 6px 25px rgba(212, 175, 55, 0.4);
-    transform: translateY(-2px);
-    color: var(--gold-pale);
+    border-color: var(--gold-light); box-shadow: 0 6px 25px rgba(212,175,55,0.4);
+    transform: translateY(-2px); color: var(--gold-pale);
   }
 
   .btn-gradient {
     background: linear-gradient(135deg, var(--maroon-rich), var(--maroon-deep));
-    border-color: var(--gold-rich);
-    color: var(--gold-pale);
-    font-size: 1.1rem;
-    padding: 16px 40px;
-    box-shadow: 
-      0 8px 25px rgba(92, 10, 10, 0.6),
-      0 0 40px rgba(212, 175, 55, 0.2);
+    border-color: var(--gold-rich); color: var(--gold-pale);
+    font-size: 1.1rem; padding: 16px 40px;
+    box-shadow: 0 8px 25px rgba(92,10,10,0.6), 0 0 40px rgba(212,175,55,0.2);
   }
 
   .btn-gradient:hover {
     background: linear-gradient(135deg, var(--maroon-medium), var(--maroon-rich));
-    box-shadow: 
-      0 12px 35px rgba(92, 10, 10, 0.8),
-      0 0 60px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 12px 35px rgba(92,10,10,0.8), 0 0 60px rgba(212,175,55,0.4);
   }
 
-  /* --- Luxury Inputs --- */
+  .btn-neon {
+    border-color: var(--neon-cyan); color: var(--neon-cyan);
+    background: rgba(0,245,255,0.05);
+    box-shadow: 0 0 15px rgba(0,245,255,0.2), inset 0 0 15px rgba(0,245,255,0.05);
+  }
+
+  .btn-neon:hover {
+    border-color: var(--neon-cyan); color: #fff;
+    box-shadow: 0 0 30px rgba(0,245,255,0.5), inset 0 0 30px rgba(0,245,255,0.1);
+  }
+
+  /* --- Input Section --- */
   .input-section {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 25px;
-    margin-bottom: 30px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px;
   }
   @media (max-width: 768px) { .input-section { grid-template-columns: 1fr; } }
 
   .form-group label {
-    display: block;
-    margin-bottom: 12px;
-    color: var(--text-gold);
-    font-size: 0.95rem;
-    font-weight: 600;
-    font-family: 'Cinzel', serif;
-    letter-spacing: 2px;
-    text-transform: uppercase;
+    display: block; margin-bottom: 12px; color: var(--text-gold);
+    font-size: 0.95rem; font-weight: 600; font-family: 'Cinzel', serif;
+    letter-spacing: 2px; text-transform: uppercase;
   }
 
   textarea, input, select {
-    width: 100%;
-    background: rgba(0, 0, 0, 0.4);
-    border: 2px solid rgba(212, 175, 55, 0.3);
-    border-radius: 0;
-    padding: 14px;
-    color: var(--text-pale-gold);
-    font-family: 'JetBrains Mono', monospace;
-    transition: all 0.3s;
-    font-size: 0.9rem;
+    width: 100%; background: rgba(0,0,0,0.4); border: 2px solid rgba(212,175,55,0.3);
+    border-radius: 0; padding: 14px; color: var(--text-pale-gold);
+    font-family: 'JetBrains Mono', monospace; transition: all 0.3s; font-size: 0.9rem;
   }
 
-  textarea {
-    height: 140px;
-    resize: none;
-  }
+  textarea { height: 140px; resize: none; }
 
   input:focus, textarea:focus, select:focus {
-    border-color: var(--gold-light);
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
-    background: rgba(0, 0, 0, 0.5);
+    border-color: var(--gold-light); box-shadow: 0 0 20px rgba(212,175,55,0.2);
+    background: rgba(0,0,0,0.5);
   }
 
-  /* --- Luxury Stats Cards --- */
+  /* --- Smart Import Area --- */
+  .import-zone {
+    border: 2px dashed rgba(0,245,255,0.4);
+    background: rgba(0,245,255,0.03);
+    padding: 50px 30px; text-align: center; cursor: pointer;
+    transition: all 0.3s; position: relative; overflow: hidden;
+  }
+
+  .import-zone:hover, .import-zone.dragover {
+    border-color: var(--neon-cyan);
+    background: rgba(0,245,255,0.08);
+    box-shadow: 0 0 30px rgba(0,245,255,0.2), inset 0 0 30px rgba(0,245,255,0.05);
+  }
+
+  .import-zone .icon-big {
+    font-size: 3rem; color: var(--neon-cyan); margin-bottom: 20px;
+    display: block; opacity: 0.7;
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { filter: drop-shadow(0 0 5px var(--neon-cyan)); opacity: 0.7; }
+    50% { filter: drop-shadow(0 0 20px var(--neon-cyan)); opacity: 1; }
+  }
+
+  .import-zone h3 {
+    font-family: 'Cinzel', serif; color: var(--neon-cyan);
+    font-size: 1.2rem; letter-spacing: 2px; margin-bottom: 10px;
+  }
+
+  .import-zone p { color: rgba(245,230,211,0.6); font-size: 0.9rem; }
+
+  /* --- Progress Bar --- */
+  .progress-wrapper {
+    margin: 20px 0; display: none;
+  }
+
+  .progress-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+    color: var(--neon-cyan); margin-bottom: 8px;
+    display: flex; justify-content: space-between;
+  }
+
+  .progress-bar-track {
+    height: 4px; background: rgba(0,245,255,0.1); border-radius: 0; overflow: hidden;
+    border: 1px solid rgba(0,245,255,0.2);
+  }
+
+  .progress-bar-fill {
+    height: 100%; width: 0%; background: linear-gradient(90deg, var(--neon-cyan), var(--gold-light));
+    transition: width 0.3s ease; box-shadow: 0 0 10px var(--neon-cyan);
+  }
+
+  /* --- Preview Table --- */
+  .preview-wrapper {
+    display: none; margin-top: 25px;
+  }
+
+  .preview-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 15px; flex-wrap: wrap; gap: 12px;
+  }
+
+  .preview-title {
+    font-family: 'Cinzel', serif; color: var(--gold-light);
+    font-size: 1.1rem; letter-spacing: 2px;
+  }
+
+  .preview-stats {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+
+  .preview-badge {
+    padding: 6px 14px; font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem; border-radius: 0; border: 1px solid;
+  }
+
+  .pb-valid { border-color: var(--neon-green); color: var(--neon-green); background: var(--neon-green-dim); }
+  .pb-invalid { border-color: #ef4444; color: #fca5a5; background: rgba(239,68,68,0.1); }
+  .pb-dup { border-color: var(--gold-rich); color: var(--gold-light); background: rgba(212,175,55,0.1); }
+
+  .preview-table-wrap {
+    max-height: 350px; overflow-y: auto;
+    border: 1px solid rgba(0,245,255,0.2);
+    background: rgba(0,0,0,0.3);
+  }
+
+  .preview-table {
+    width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.9rem;
+  }
+
+  .preview-table thead th {
+    position: sticky; top: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(0,245,255,0.05));
+    color: var(--neon-cyan); font-weight: 600; font-size: 0.8rem;
+    padding: 12px 16px; text-align: left;
+    border-bottom: 2px solid rgba(0,245,255,0.3);
+    font-family: 'Cinzel', serif; letter-spacing: 1px;
+  }
+
+  .preview-table tbody tr { transition: all 0.2s; }
+  .preview-table tbody tr:hover { background: rgba(0,245,255,0.05); }
+  .preview-table tbody td { padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+  .cell-minera {
+    font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    color: var(--gold-light); text-shadow: 0 0 10px rgba(212,175,55,0.4);
+    background: rgba(212,175,55,0.08); padding: 4px 8px !important;
+    border: 1px solid rgba(212,175,55,0.2);
+  }
+
+  .cell-amount {
+    font-family: 'JetBrains Mono', monospace; font-weight: 600;
+    color: var(--neon-green); text-shadow: 0 0 10px rgba(57,255,20,0.3);
+  }
+
+  .cell-invalid { color: #fca5a5; font-style: italic; }
+  .cell-dup { color: var(--gold-light); }
+
+  .row-invalid { background: rgba(239,68,68,0.05) !important; }
+  .row-matched { background: rgba(16,185,129,0.05) !important; }
+
+  .row-badge {
+    padding: 3px 8px; font-size: 0.7rem; font-family: 'Cinzel', serif;
+    font-weight: 700; letter-spacing: 0.5px; border: 1px solid; text-transform: uppercase;
+  }
+
+  .rb-valid { border-color: #10b981; color: #6ee7b7; background: rgba(16,185,129,0.1); }
+  .rb-invalid { border-color: #ef4444; color: #fca5a5; background: rgba(239,68,68,0.1); }
+  .rb-dup { border-color: var(--gold-rich); color: var(--gold-light); background: rgba(212,175,55,0.1); }
+  .rb-matched { border-color: #00f5ff; color: #00f5ff; background: rgba(0,245,255,0.1); }
+  .rb-new { border-color: #a78bfa; color: #c4b5fd; background: rgba(167,139,250,0.1); }
+
+  /* --- Validation Alerts --- */
+  .val-errors {
+    margin-top: 15px; display: none;
+  }
+
+  .val-error-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px; margin-bottom: 6px;
+    background: rgba(239,68,68,0.1); border-left: 3px solid #ef4444;
+    font-size: 0.9rem; color: #fca5a5;
+  }
+
+  /* --- Stats Cards --- */
   .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px; margin-bottom: 30px;
   }
 
   .stat-card {
-    padding: 30px;
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(135deg, rgba(92, 10, 10, 0.4) 0%, rgba(122, 22, 22, 0.2) 100%);
+    padding: 30px; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, rgba(92,10,10,0.4) 0%, rgba(122,22,22,0.2) 100%);
   }
 
   .stat-card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 100px;
-    height: 100px;
-    background: radial-gradient(circle, rgba(212, 175, 55, 0.1), transparent);
+    content: ''; position: absolute; top: 0; right: 0;
+    width: 100px; height: 100px;
+    background: radial-gradient(circle, rgba(212,175,55,0.1), transparent);
     border-radius: 50%;
   }
 
   .stat-card h3 {
-    font-size: 0.8rem;
-    color: var(--text-gold);
-    margin-bottom: 12px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    font-family: 'Cinzel', serif;
-    font-weight: 600;
+    font-size: 0.8rem; color: var(--text-gold); margin-bottom: 12px;
+    text-transform: uppercase; letter-spacing: 2px; font-family: 'Cinzel', serif;
   }
 
   .stat-card .value {
-    font-size: 2rem;
-    font-weight: 700;
-    font-family: 'Playfair Display', serif;
-    position: relative;
-    z-index: 1;
+    font-size: 2rem; font-weight: 700; font-family: 'Playfair Display', serif;
+    position: relative; z-index: 1;
   }
 
   .stat-card .description {
-    font-size: 0.8rem;
-    color: var(--text-cream);
-    margin-top: 8px;
-    font-style: italic;
+    font-size: 0.8rem; color: var(--text-cream); margin-top: 8px; font-style: italic;
   }
 
   /* --- Dashboard Layout --- */
   .dashboard-row {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 25px;
-    margin-bottom: 30px;
+    display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 30px;
   }
   @media (max-width: 900px) { .dashboard-row { grid-template-columns: 1fr; } }
 
-  /* --- Luxury Table --- */
-  .table-wrapper {
-    max-height: 400px;
-    overflow-y: auto;
-    border-radius: 0;
-    position: relative;
-  }
+  /* --- Table --- */
+  .table-wrapper { max-height: 400px; overflow-y: auto; position: relative; }
 
-  table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.95rem;
-  }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.95rem; }
 
   thead th {
-    position: sticky;
-    top: 0;
-    background: linear-gradient(135deg, rgba(92, 10, 10, 0.95), rgba(122, 22, 22, 0.95));
-    color: var(--text-gold);
-    font-weight: 700;
-    font-size: 0.85rem;
-    padding: 16px;
-    text-align: left;
-    border-bottom: 2px solid var(--gold-rich);
-    z-index: 10;
-    font-family: 'Cinzel', serif;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+    position: sticky; top: 0;
+    background: linear-gradient(135deg, rgba(92,10,10,0.95), rgba(122,22,22,0.95));
+    color: var(--text-gold); font-weight: 700; font-size: 0.85rem;
+    padding: 16px; text-align: left; border-bottom: 2px solid var(--gold-rich);
+    z-index: 10; font-family: 'Cinzel', serif; letter-spacing: 1px; text-transform: uppercase;
   }
 
   tbody tr {
-    transition: all 0.3s;
-    cursor: pointer;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-    background: rgba(0, 0, 0, 0.2);
+    transition: all 0.3s; cursor: pointer;
+    border-bottom: 1px solid rgba(212,175,55,0.1); background: rgba(0,0,0,0.2);
   }
-  
-  tbody tr:hover { 
-    background: linear-gradient(90deg, rgba(212, 175, 55, 0.1), rgba(122, 22, 22, 0.2));
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+
+  tbody tr:hover {
+    background: linear-gradient(90deg, rgba(212,175,55,0.1), rgba(122,22,22,0.2));
+    box-shadow: 0 0 20px rgba(212,175,55,0.15);
   }
-  
-  tbody td { 
-    padding: 14px 16px;
-    color: var(--text-cream);
-  }
+
+  tbody td { padding: 14px 16px; color: var(--text-cream); }
 
   .text-right { text-align: right; }
   .text-center { text-align: center; }
   .mono { font-family: 'JetBrains Mono', monospace; }
 
-  /* --- Luxury Badges --- */
   .badge {
-    padding: 6px 12px;
-    border-radius: 0;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    font-family: 'Cinzel', serif;
-    letter-spacing: 1px;
-    border: 1px solid;
+    padding: 6px 12px; border-radius: 0; font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; font-family: 'Cinzel', serif; letter-spacing: 1px; border: 1px solid;
   }
   
-  .badge-success { 
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1)); 
-    color: #6ee7b7; 
-    border-color: #10b981;
-  }
-  
-  .badge-warning { 
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(212, 175, 55, 0.1)); 
-    color: var(--gold-light); 
-    border-color: var(--gold-rich);
-  }
-  
-  .badge-danger { 
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.1)); 
-    color: #fca5a5; 
-    border-color: #ef4444;
-  }
+  .badge-success { background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.1)); color: #6ee7b7; border-color: #10b981; }
+  .badge-warning { background: linear-gradient(135deg, rgba(212,175,55,0.3), rgba(212,175,55,0.1)); color: var(--gold-light); border-color: var(--gold-rich); }
+  .badge-danger { background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(239,68,68,0.1)); color: #fca5a5; border-color: #ef4444; }
 
-  /* --- Luxury Alerts --- */
+  /* --- Alerts --- */
   .custom-alert {
-    padding: 16px 20px;
-    border-radius: 0;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    border-left: 4px solid;
-    font-size: 1rem;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
+    padding: 16px 20px; border-radius: 0; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 15px; border-left: 4px solid;
+    font-size: 1rem; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px);
   }
   
-  .alert-success { 
-    border-color: #10b981; 
-    color: #6ee7b7;
-    background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), transparent);
-  }
-  
-  .alert-danger { 
-    border-color: #ef4444; 
-    color: #fca5a5;
-    background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), transparent);
-  }
-  
-  .alert-warning { 
-    border-color: var(--gold-rich); 
-    color: var(--gold-light);
-    background: linear-gradient(90deg, rgba(212, 175, 55, 0.1), transparent);
-  }
+  .alert-success { border-color: #10b981; color: #6ee7b7; background: linear-gradient(90deg, rgba(16,185,129,0.1), transparent); }
+  .alert-danger { border-color: #ef4444; color: #fca5a5; background: linear-gradient(90deg, rgba(239,68,68,0.1), transparent); }
+  .alert-warning { border-color: var(--gold-rich); color: var(--gold-light); background: linear-gradient(90deg, rgba(212,175,55,0.1), transparent); }
 
-  /* --- Luxury Detail Drawer --- */
+  /* --- Detail Drawer --- */
   .detail-drawer {
-    position: fixed;
-    bottom: -100%;
-    left: 0;
-    width: 100%;
-    background: linear-gradient(135deg, rgba(92, 10, 10, 0.95), rgba(122, 22, 22, 0.95));
+    position: fixed; bottom: -100%; left: 0; width: 100%;
+    background: linear-gradient(135deg, rgba(92,10,10,0.95), rgba(122,22,22,0.95));
     border-top: 3px solid var(--gold-rich);
     box-shadow: 0 -20px 60px rgba(0,0,0,0.8);
-    padding: 30px;
-    z-index: 200;
-    transition: bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 30px; z-index: 200;
+    transition: bottom 0.5s cubic-bezier(0.4,0,0.2,1);
     backdrop-filter: blur(30px);
   }
 
-  .detail-drawer.active {
-    bottom: 0;
-  }
+  .detail-drawer.active { bottom: 0; }
 
   .close-drawer {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    background: rgba(212, 175, 55, 0.2);
-    border: 2px solid var(--gold-rich);
-    color: var(--gold-light);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s;
-    font-size: 1.2rem;
+    position: absolute; top: 20px; right: 30px;
+    background: rgba(212,175,55,0.2); border: 2px solid var(--gold-rich);
+    color: var(--gold-light); width: 40px; height: 40px; border-radius: 50%;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s; font-size: 1.2rem;
   }
 
-  .close-drawer:hover {
-    background: rgba(212, 175, 55, 0.3);
-    transform: rotate(90deg);
-  }
+  .close-drawer:hover { background: rgba(212,175,55,0.3); transform: rotate(90deg); }
 
   .hidden { display: none !important; }
 
-  /* Luxury Scrollbar */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { 
-    background: rgba(0, 0, 0, 0.3); 
-    border-left: 1px solid rgba(212, 175, 55, 0.1);
-  }
-  ::-webkit-scrollbar-thumb { 
-    background: linear-gradient(180deg, var(--gold-rich), var(--maroon-medium)); 
-    border-radius: 0;
-  }
-  ::-webkit-scrollbar-thumb:hover { 
-    background: linear-gradient(180deg, var(--gold-light), var(--maroon-rich)); 
-  }
+  ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-left: 1px solid rgba(212,175,55,0.1); }
+  ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--gold-rich), var(--maroon-medium)); }
+  ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, var(--gold-light), var(--maroon-rich)); }
 
-  /* Section Titles */
   .section-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--text-gold);
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid rgba(212, 175, 55, 0.3);
-    letter-spacing: 1px;
+    font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700;
+    color: var(--text-gold); margin-bottom: 20px; padding-bottom: 10px;
+    border-bottom: 2px solid rgba(212,175,55,0.3); letter-spacing: 1px;
   }
 
-  /* Decorative Elements */
   .ornament {
-    width: 40px;
-    height: 2px;
+    width: 40px; height: 2px;
     background: linear-gradient(90deg, transparent, var(--gold-rich), transparent);
     margin: 10px auto;
   }
 
+  /* --- Clean Export Output --- */
+  .export-clean-output {
+    display: none; margin-top: 20px;
+  }
+
+  .export-clean-output pre {
+    background: rgba(0,0,0,0.6); border: 1px solid rgba(0,245,255,0.3);
+    padding: 20px; color: var(--neon-cyan); font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem; overflow-x: auto; max-height: 300px;
+    box-shadow: inset 0 0 20px rgba(0,245,255,0.05);
+  }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block; width: 20px; height: 20px;
+    border: 3px solid rgba(0,245,255,0.2);
+    border-top: 3px solid var(--neon-cyan);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Tooltip */
+  .tooltip-wrap { position: relative; display: inline-block; }
+  .tooltip-tip {
+    position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.9); color: var(--text-cream);
+    padding: 6px 10px; font-size: 0.78rem; white-space: nowrap;
+    border: 1px solid var(--gold-rich); pointer-events: none; opacity: 0; transition: opacity 0.2s;
+    font-family: 'JetBrains Mono', monospace; z-index: 100;
+  }
+  .tooltip-wrap:hover .tooltip-tip { opacity: 1; }
+
   @media (max-width: 768px) {
     h1 { font-size: 2rem; }
     .btn-gradient { font-size: 1rem; padding: 14px 32px; }
+  }
+
+  /* Neon glow text */
+  .neon-text { color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan), 0 0 30px rgba(0,245,255,0.4); }
+  .gold-text  { color: var(--gold-light); text-shadow: 0 0 10px rgba(212,175,55,0.5); }
+
+  /* ===================== UNIFIED ACTION BAR ===================== */
+  .action-bar {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-bottom: 30px;
+    margin-top: 0;
+    background: linear-gradient(135deg, rgba(10,2,2,0.85), rgba(30,8,8,0.9));
+    border: 1px solid rgba(212,175,55,0.25);
+    border-top: none;
+    backdrop-filter: blur(20px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .action-bar::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.6), rgba(0,245,255,0.4), rgba(212,175,55,0.6), transparent);
+    animation: bar-shimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes bar-shimmer {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* Tab section of action bar */
+  .abar-tabs {
+    display: flex;
+    flex: 1;
+    border-right: 1px solid rgba(212,175,55,0.15);
+  }
+
+  .abar-tab {
+    flex: 1; padding: 16px 20px;
+    background: transparent; border: none; cursor: pointer;
+    font-family: 'Cinzel', serif; font-size: 0.85rem; letter-spacing: 1px;
+    text-transform: uppercase; color: rgba(212,175,55,0.45);
+    transition: all 0.3s; position: relative;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    border-right: 1px solid rgba(212,175,55,0.08);
+  }
+
+  .abar-tab:last-child { border-right: none; }
+
+  .abar-tab::after {
+    content: '';
+    position: absolute; bottom: 0; left: 20%; right: 20%; height: 2px;
+    background: var(--gold-rich); transform: scaleX(0);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .abar-tab.active {
+    color: var(--gold-light);
+    background: linear-gradient(180deg, rgba(212,175,55,0.07), transparent);
+  }
+
+  .abar-tab.active::after { transform: scaleX(1); }
+  .abar-tab:hover { color: var(--gold-light); }
+
+  /* Export section of action bar */
+  .abar-exports {
+    display: flex; align-items: center; gap: 0;
+    padding: 0 4px;
+    border-left: 1px solid rgba(212,175,55,0.15);
+  }
+
+  .abar-exports .export-label {
+    font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 2px;
+    color: rgba(212,175,55,0.35); text-transform: uppercase;
+    padding: 0 12px; white-space: nowrap;
+    writing-mode: horizontal-tb;
+  }
+
+  .abar-sep {
+    width: 1px; height: 28px;
+    background: linear-gradient(180deg, transparent, rgba(212,175,55,0.2), transparent);
+    margin: 0 2px;
+  }
+
+  .export-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; padding: 10px 16px; border: none; background: transparent;
+    cursor: pointer; color: rgba(212,175,55,0.4);
+    font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 1px;
+    text-transform: uppercase; transition: all 0.3s;
+    position: relative; overflow: hidden; min-width: 62px;
+  }
+
+  .export-btn i { font-size: 1.1rem; transition: all 0.3s; }
+
+  .export-btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(212,175,55,0.08);
+    transform: scaleY(0); transform-origin: bottom;
+    transition: transform 0.3s;
+  }
+
+  .export-btn:hover::before { transform: scaleY(1); }
+
+  .export-btn:hover {
+    color: var(--gold-light);
+  }
+
+  .export-btn:hover i {
+    transform: translateY(-2px);
+    filter: drop-shadow(0 0 6px rgba(212,175,55,0.6));
+  }
+
+  .export-btn.neon-export { color: rgba(0,245,255,0.4); }
+  .export-btn.neon-export::before { background: rgba(0,245,255,0.08); }
+  .export-btn.neon-export:hover { color: var(--neon-cyan); }
+  .export-btn.neon-export:hover i { filter: drop-shadow(0 0 6px rgba(0,245,255,0.6)); }
+
+  .export-btn.disabled {
+    opacity: 0.25; pointer-events: none;
+  }
+
+  /* Analyze CTA in action bar */
+  .abar-cta {
+    display: flex; align-items: center;
+    padding: 0 4px;
+    border-left: 1px solid rgba(212,175,55,0.15);
+  }
+
+  .cta-analyze {
+    margin: 6px; padding: 10px 20px;
+    background: linear-gradient(135deg, var(--maroon-rich), var(--maroon-deep));
+    border: 1px solid var(--gold-rich); color: var(--gold-pale);
+    font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer; transition: all 0.3s;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 0 20px rgba(92,10,10,0.5), 0 0 40px rgba(212,175,55,0.1);
+    white-space: nowrap;
+  }
+
+  .cta-analyze:hover {
+    background: linear-gradient(135deg, var(--maroon-medium), var(--maroon-rich));
+    box-shadow: 0 0 30px rgba(92,10,10,0.8), 0 0 60px rgba(212,175,55,0.3);
+    color: #fff;
+  }
+
+  .cta-analyze i { animation: pulse-icon 2s ease-in-out infinite; }
+  @keyframes pulse-icon {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+
+  /* Status dot in export area */
+  .export-status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(212,175,55,0.2);
+    display: inline-block; margin-bottom: 2px;
+    transition: all 0.3s;
+  }
+
+  .export-btn:not(.disabled) .export-status-dot {
+    background: var(--gold-rich);
+    box-shadow: 0 0 6px var(--gold-rich);
+    animation: dot-pulse 1.5s ease-in-out infinite;
+  }
+
+  .export-btn.neon-export:not(.disabled) .export-status-dot {
+    background: var(--neon-cyan);
+    box-shadow: 0 0 6px var(--neon-cyan);
+  }
+
+  @keyframes dot-pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  @media (max-width: 900px) {
+    .export-label { display: none; }
+    .export-btn { min-width: 50px; padding: 10px 10px; }
+    .cta-analyze span { display: none; }
+    .cta-analyze { padding: 10px 14px; }
+  }
+
+  @media (max-width: 600px) {
+    .abar-exports .export-btn { min-width: 44px; padding: 8px 8px; font-size: 0.6rem; }
+    .abar-tab { font-size: 0.75rem; padding: 14px 12px; }
   }
 </style>
 </head>
@@ -531,72 +718,244 @@
 <canvas id="bgCanvas"></canvas>
 
 <div class="container">
+  <!-- ====== HEADER ====== -->
   <header>
     <div>
       <h1>QRIS RECONCILER</h1>
       <div class="ornament"></div>
-      <p class="subtitle">TVTOTO ARZ</p>
+      <p class="subtitle">TVTOTO ARZ — Smart Edition</p>
     </div>
-    <div class="header-actions">
-      <button class="btn" onclick="exportExcel()" id="btnExcel" style="display:none">
-        <i class="fa-solid fa-file-excel"></i> Excel
-      </button>
-      <button class="btn" onclick="exportCSV()" id="btnCSV" style="display:none">
-        <i class="fa-solid fa-file-csv"></i> CSV
-      </button>
-      <button class="btn" onclick="exportPDF()" id="btnPDF" style="display:none">
-        <i class="fa-solid fa-file-pdf"></i> PDF
-      </button>
+    <div style="text-align:right;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:rgba(212,175,55,0.4); letter-spacing:2px; margin-bottom:6px;">SISTEM REKONSILIASI</div>
+      <div id="headerStatus" style="font-family:'Cinzel',serif; font-size:0.8rem; color:rgba(212,175,55,0.35); letter-spacing:1px;">
+        <i class="fa-solid fa-circle" style="font-size:0.5rem; margin-right:6px;"></i> STANDBY
+      </div>
     </div>
   </header>
 
-  <div class="input-section">
-    <div class="glass-panel" style="padding: 30px;">
-      <div class="form-group">
-        <label><i class="fa-solid fa-server"></i> Data Admin</label>
-        <textarea id="adminData" placeholder="OrderID Nominal&#10;Contoh: Minera 160000">Minera001 160000
+  <!-- ====== UNIFIED ACTION BAR ====== -->
+  <div class="action-bar">
+
+    <!-- Left: Mode tabs -->
+    <div class="abar-tabs">
+      <button class="abar-tab active" id="tabManualBtn" onclick="switchTab('manual', this)">
+        <i class="fa-solid fa-keyboard"></i>
+        <span>Input Manual</span>
+      </button>
+      <button class="abar-tab" id="tabImportBtn" onclick="switchTab('import', this)">
+        <i class="fa-solid fa-cloud-upload-alt"></i>
+        <span>Smart Import</span>
+      </button>
+    </div>
+
+    <!-- Analyze button -->
+    <div class="abar-cta">
+      <button class="cta-analyze" onclick="handleAnalyze()">
+        <i class="fa-solid fa-bolt"></i>
+        <span>Analisis</span>
+      </button>
+    </div>
+
+    <!-- Right: Export buttons -->
+    <div class="abar-exports">
+      <span class="export-label">Export</span>
+      <div class="abar-sep"></div>
+
+      <button class="export-btn disabled" id="btnExcel" onclick="exportExcel()" title="Export Excel">
+        <div class="export-status-dot"></div>
+        <i class="fa-solid fa-file-excel" style="color:inherit;"></i>
+        <span>XLS</span>
+      </button>
+
+      <button class="export-btn disabled" id="btnCSV" onclick="exportCSV()" title="Export CSV">
+        <div class="export-status-dot"></div>
+        <i class="fa-solid fa-file-csv" style="color:inherit;"></i>
+        <span>CSV</span>
+      </button>
+
+      <button class="export-btn disabled" id="btnPDF" onclick="exportPDF()" title="Export PDF">
+        <div class="export-status-dot"></div>
+        <i class="fa-solid fa-file-pdf" style="color:inherit;"></i>
+        <span>PDF</span>
+      </button>
+
+      <button class="export-btn neon-export disabled" id="btnClean" onclick="exportCleanScript()" title="Clean Script">
+        <div class="export-status-dot"></div>
+        <i class="fa-solid fa-code" style="color:inherit;"></i>
+        <span>Script</span>
+      </button>
+    </div>
+  </div>
+  <!-- /UNIFIED ACTION BAR -->
+
+  <!-- ======================== TAB: MANUAL ======================== -->
+  <div class="tab-content active" id="tab-manual">
+    <div class="input-section">
+      <div class="glass-panel" style="padding: 30px;">
+        <div class="form-group">
+          <label><i class="fa-solid fa-server"></i> Data Admin</label>
+          <textarea id="adminData" placeholder="OrderID Nominal&#10;Contoh: Minera001 160000">Minera001 160000
 Minera002 175000
 Minera004 200000</textarea>
+        </div>
       </div>
-    </div>
 
-    <div class="glass-panel" style="padding: 30px;">
-      <div class="form-group">
-        <label><i class="fa-solid fa-qrcode"></i> Data QRIS</label>
-        <textarea id="qrisData" placeholder="OrderID Nominal&#10;Contoh: Minera002 175000">Minera001 160000
+      <div class="glass-panel" style="padding: 30px;">
+        <div class="form-group">
+          <label><i class="fa-solid fa-qrcode"></i> Data QRIS</label>
+          <textarea id="qrisData" placeholder="OrderID Nominal&#10;Contoh: Minera002 175000">Minera001 160000
 Minera003 180000
 Minera004 200000</textarea>
+        </div>
       </div>
     </div>
   </div>
 
-  <div style="text-align: center; margin-bottom: 40px;">
-    <button class="btn btn-gradient" onclick="generateDashboard()">
-      <i class="fa-solid fa-chart-line"></i> Proses Analisis
-    </button>
+  <!-- ======================== TAB: SMART IMPORT ======================== -->
+  <div class="tab-content" id="tab-import">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
+      
+      <!-- Admin Import -->
+      <div class="glass-panel" style="padding: 25px;">
+        <h3 class="section-title"><i class="fa-solid fa-server" style="color:var(--gold-rich)"></i> Import Data Admin</h3>
+
+        <div class="import-zone" id="adminDropZone" onclick="document.getElementById('adminFileInput').click()"
+             ondragover="handleDragOver(event,'adminDropZone')"
+             ondragleave="handleDragLeave('adminDropZone')"
+             ondrop="handleDrop(event,'admin')">
+          <i class="fa-solid fa-file-import icon-big"></i>
+          <h3>Drop File / Click Upload</h3>
+          <p>Support: .xlsx, .csv, .txt</p>
+          <p style="margin-top:10px; font-size:0.78rem; color:rgba(212,175,55,0.6); font-family:'JetBrains Mono',monospace;">
+            Auto-detect: <span style="color:var(--gold-light);">Jumlah Operator</span> + <span style="color:var(--gold-light);">Nomor Rekening Pembayar</span>
+          </p>
+          <input type="file" id="adminFileInput" style="display:none" accept=".xlsx,.csv,.txt" onchange="handleFileUpload(event,'admin')">
+        </div>
+
+        <div class="progress-wrapper" id="adminProgress">
+          <div class="progress-label">
+            <span id="adminProgressLabel">Memproses...</span>
+            <span id="adminProgressPct">0%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="adminProgressFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QRIS Import -->
+      <div class="glass-panel" style="padding: 25px;">
+        <h3 class="section-title"><i class="fa-solid fa-qrcode" style="color:var(--neon-cyan)"></i> Import Data QRIS</h3>
+
+        <div class="import-zone" id="qrisDropZone" onclick="document.getElementById('qrisFileInput').click()"
+             ondragover="handleDragOver(event,'qrisDropZone')"
+             ondragleave="handleDragLeave('qrisDropZone')"
+             ondrop="handleDrop(event,'qris')">
+          <i class="fa-solid fa-qrcode icon-big" style="color:var(--neon-cyan); animation: pulse-glow 2s ease-in-out infinite;"></i>
+          <h3 style="color:var(--neon-cyan)">Drop File / Click Upload</h3>
+          <p>Support: .xlsx, .csv, .txt</p>
+          <p style="margin-top:10px; font-size:0.78rem; color:rgba(0,245,255,0.5); font-family:'JetBrains Mono',monospace;">
+            Auto-detect: <span style="color:var(--neon-cyan);">reference_no</span> + <span style="color:var(--neon-cyan);">amount</span>
+          </p>
+          <input type="file" id="qrisFileInput" style="display:none" accept=".xlsx,.csv,.txt" onchange="handleFileUpload(event,'qris')">
+        </div>
+
+        <div class="progress-wrapper" id="qrisProgress">
+          <div class="progress-label">
+            <span id="qrisProgressLabel">Memproses...</span>
+            <span id="qrisProgressPct">0%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="qrisProgressFill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Admin -->
+    <div class="preview-wrapper" id="adminPreviewWrapper">
+      <div class="glass-panel" style="padding: 25px;">
+        <div class="preview-header">
+          <div class="preview-title"><i class="fa-solid fa-eye"></i> Preview — Data Admin</div>
+          <div class="preview-stats" id="adminPreviewStats"></div>
+        </div>
+        <div class="val-errors" id="adminValErrors"></div>
+        <div class="preview-table-wrap">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Kode Minera</th>
+                <th>Nominal</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="adminPreviewBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview QRIS -->
+    <div class="preview-wrapper" id="qrisPreviewWrapper">
+      <div class="glass-panel" style="padding: 25px; margin-top: 20px;">
+        <div class="preview-header">
+          <div class="preview-title" style="color:var(--neon-cyan);"><i class="fa-solid fa-eye"></i> Preview — Data QRIS</div>
+          <div class="preview-stats" id="qrisPreviewStats"></div>
+        </div>
+        <div class="val-errors" id="qrisValErrors"></div>
+        <div class="preview-table-wrap">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Kode Minera</th>
+                <th>Nominal</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="qrisPreviewBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Import Action -->
+    <div id="importActions" style="display:none; margin-top:20px; padding:14px 20px; background:rgba(0,245,255,0.04); border:1px solid rgba(0,245,255,0.15); display:none; align-items:center; gap:12px;">
+      <i class="fa-solid fa-circle-info" style="color:var(--neon-cyan);"></i>
+      <span style="font-family:'Cinzel',serif; font-size:0.85rem; color:rgba(0,245,255,0.7); letter-spacing:1px;">
+        Data siap — Klik <b style="color:var(--gold-light);">Analisis</b> di action bar atas untuk mulai rekonsiliasi
+      </span>
+    </div>
   </div>
 
+  <!-- ======================== DASHBOARD CONTENT ======================== -->
   <div id="dashboardContent" class="hidden">
+    <div style="display:flex; align-items:center; gap:15px; margin-bottom:30px; padding:15px 20px; background:rgba(0,245,255,0.05); border:1px solid rgba(0,245,255,0.2);">
+      <i class="fa-solid fa-circle-check" style="color:var(--neon-cyan); font-size:1.2rem;"></i>
+      <span style="color:var(--neon-cyan); font-family:'Cinzel',serif; letter-spacing:1px; font-size:0.9rem;">ANALISIS SELESAI — Data berhasil diproses</span>
+    </div>
+
     <!-- Stats -->
     <div class="stats-grid">
       <div class="glass-panel stat-card">
         <h3>Total Pendapatan</h3>
-        <div class="value" style="color: var(--gold-light);" id="statRevenue">Rp 0</div>
+        <div class="value" style="color:var(--gold-light);" id="statRevenue">Rp 0</div>
         <div class="description"><i class="fa-solid fa-coins"></i> Estimasi Bersih</div>
       </div>
       <div class="glass-panel stat-card">
         <h3>Status KLOP</h3>
-        <div class="value" style="color: #6ee7b7;" id="statMatch">0</div>
+        <div class="value" style="color:#6ee7b7;" id="statMatch">0</div>
         <div class="description"><i class="fa-solid fa-shield-halved"></i> Transaksi Aman</div>
       </div>
       <div class="glass-panel stat-card">
         <h3>Total Selisih</h3>
-        <div class="value" style="color: #fca5a5;" id="statDiff">Rp 0</div>
+        <div class="value" style="color:#fca5a5;" id="statDiff">Rp 0</div>
         <div class="description"><i class="fa-solid fa-exclamation-triangle"></i> Potensi Kerugian</div>
       </div>
       <div class="glass-panel stat-card">
         <h3>Biaya MDR</h3>
-        <div class="value" style="color: var(--gold-rich);" id="statMDR">Rp 0</div>
+        <div class="value" style="color:var(--gold-rich);" id="statMDR">Rp 0</div>
         <div class="description">0.7% (Estimasi)</div>
       </div>
     </div>
@@ -605,7 +964,6 @@ Minera004 200000</textarea>
     <div id="alertSection"></div>
 
     <div class="dashboard-row">
-      <!-- Chart -->
       <div class="glass-panel" style="padding: 30px;">
         <h3 class="section-title">Visualisasi Data</h3>
         <div style="height: 240px; position: relative;">
@@ -613,7 +971,6 @@ Minera004 200000</textarea>
         </div>
       </div>
       
-      <!-- Filters -->
       <div class="glass-panel" style="padding: 30px; display: flex; flex-direction: column; gap: 16px;">
         <h3 class="section-title">Filter Transaksi</h3>
         
@@ -647,8 +1004,8 @@ Minera004 200000</textarea>
     <div class="glass-panel" style="padding: 30px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
         <div class="section-title" style="margin: 0; border: none; padding: 0;">Laporan Transaksi</div>
-        <div style="font-size: 0.95rem; background: rgba(212, 175, 55, 0.1); padding: 10px 20px; border: 1px solid var(--gold-rich);">
-          Total Selisih: <span id="totalSelisihDisplay" class="mono" style="color: var(--gold-light); font-weight: bold;">Rp 0</span>
+        <div style="font-size: 0.95rem; background: rgba(212,175,55,0.1); padding: 10px 20px; border: 1px solid var(--gold-rich);">
+          Total Selisih: <span id="totalSelisihDisplay" class="mono" style="color:var(--gold-light); font-weight:bold;">Rp 0</span>
         </div>
       </div>
       
@@ -663,10 +1020,23 @@ Minera004 200000</textarea>
               <th class="text-center">Status</th>
             </tr>
           </thead>
-          <tbody id="tableBody">
-            <!-- Data akan diisi di sini -->
-          </tbody>
+          <tbody id="tableBody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Clean Script Export Output -->
+    <div class="export-clean-output" id="cleanScriptOutput">
+      <div class="glass-panel" style="padding: 25px; margin-top: 25px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+          <h3 class="section-title" style="margin:0; border:none; padding:0; color:var(--neon-cyan);">
+            <i class="fa-solid fa-code"></i> Clean Export Script
+          </h3>
+          <button class="btn btn-neon" onclick="copyCleanScript()" style="font-size:0.8rem; padding:8px 16px;">
+            <i class="fa-solid fa-copy"></i> Copy
+          </button>
+        </div>
+        <pre id="cleanScriptPre"></pre>
       </div>
     </div>
   </div>
@@ -677,110 +1047,590 @@ Minera004 200000</textarea>
   <button class="close-drawer" onclick="closeDrawer()"><i class="fa-solid fa-xmark"></i></button>
   <div style="max-width: 1000px; margin: 0 auto;">
     <h2 class="section-title" style="font-size: 1.8rem;">
-      Detail Transaksi: <span id="drawerOrderId" class="mono" style="color: var(--gold-light);"></span>
+      Detail Transaksi: <span id="drawerOrderId" class="mono" style="color:var(--gold-light);"></span>
     </h2>
     <div class="ornament" style="margin: 20px 0;"></div>
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-      <div class="glass-panel" style="padding: 25px; background: rgba(0, 0, 0, 0.4);">
+      <div class="glass-panel" style="padding: 25px; background: rgba(0,0,0,0.4);">
         <div style="font-size: 0.85rem; color: var(--text-gold); margin-bottom: 10px; font-family: 'Cinzel', serif; letter-spacing: 1px;">Nominal Admin</div>
         <div id="drawerAdmin" class="mono" style="font-size: 1.5rem; color: var(--gold-pale); font-weight: 600;">-</div>
       </div>
-      <div class="glass-panel" style="padding: 25px; background: rgba(0, 0, 0, 0.4);">
+      <div class="glass-panel" style="padding: 25px; background: rgba(0,0,0,0.4);">
         <div style="font-size: 0.85rem; color: var(--text-gold); margin-bottom: 10px; font-family: 'Cinzel', serif; letter-spacing: 1px;">Nominal QRIS</div>
         <div id="drawerQris" class="mono" style="font-size: 1.5rem; color: var(--gold-pale); font-weight: 600;">-</div>
       </div>
-      <div class="glass-panel" style="padding: 25px; background: rgba(0, 0, 0, 0.4);">
+      <div class="glass-panel" style="padding: 25px; background: rgba(0,0,0,0.4);">
         <div style="font-size: 0.85rem; color: var(--text-gold); margin-bottom: 10px; font-family: 'Cinzel', serif; letter-spacing: 1px;">Selisih</div>
         <div id="drawerDiff" class="mono" style="font-size: 1.5rem; color: #fca5a5; font-weight: 600;">-</div>
       </div>
     </div>
     <div style="margin-top: 25px; text-align: center;">
-        <button class="btn" onclick="closeDrawer()"><i class="fa-solid fa-times"></i> Tutup</button>
+      <button class="btn" onclick="closeDrawer()"><i class="fa-solid fa-times"></i> Tutup</button>
     </div>
   </div>
 </div>
 
 <script>
-// --- 1. Background Animation Logic ---
+// ===========================================================
+// BACKGROUND ANIMATION
+// ===========================================================
 const canvas = document.getElementById('bgCanvas');
 const ctx = canvas.getContext('2d');
-let width, height;
-let particles = [];
+let width, height, particles = [];
 
-function resize() {
-  width = canvas.width = window.innerWidth;
-  height = canvas.height = window.innerHeight;
-}
+function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
 
 class Particle {
   constructor() {
-    this.x = Math.random() * width;
-    this.y = Math.random() * height;
-    this.vx = (Math.random() - 0.5) * 0.3;
-    this.vy = (Math.random() - 0.5) * 0.3;
-    this.size = Math.random() * 2.5 + 1;
-    this.color = `rgba(212, 175, 55, ${Math.random() * 0.4 + 0.1})`;
+    this.x = Math.random()*width; this.y = Math.random()*height;
+    this.vx = (Math.random()-0.5)*0.3; this.vy = (Math.random()-0.5)*0.3;
+    this.size = Math.random()*2.5+1;
+    this.color = `rgba(212,175,55,${Math.random()*0.4+0.1})`;
   }
   update() {
-    this.x += this.vx;
-    this.y += this.vy;
-    if (this.x < 0) this.x = width;
-    if (this.x > width) this.x = 0;
-    if (this.y < 0) this.y = height;
-    if (this.y > height) this.y = 0;
+    this.x += this.vx; this.y += this.vy;
+    if(this.x<0) this.x=width; if(this.x>width) this.x=0;
+    if(this.y<0) this.y=height; if(this.y>height) this.y=0;
   }
   draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fillStyle = this.color;
-    ctx.fill();
-    
-    // Add glow effect
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = this.color;
+    ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+    ctx.fillStyle = this.color; ctx.shadowBlur=10; ctx.shadowColor=this.color; ctx.fill();
   }
 }
 
-function initParticles() {
-  particles = [];
-  for (let i = 0; i < 50; i++) {
-    particles.push(new Particle());
-  }
-}
-
-function animateParticles() {
-  ctx.clearRect(0, 0, width, height);
-  particles.forEach(p => {
-    p.update();
-    p.draw();
-  });
-  requestAnimationFrame(animateParticles);
-}
+function initParticles() { particles=[]; for(let i=0;i<50;i++) particles.push(new Particle()); }
+function animateParticles() { ctx.clearRect(0,0,width,height); particles.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(animateParticles); }
 
 window.addEventListener('resize', resize);
-resize();
-initParticles();
-animateParticles();
+resize(); initParticles(); animateParticles();
 
-// --- 2. LOGIC TIDAK DIUBAH (MENGGUNAKAN FORMAT SPASI) ---
+// ===========================================================
+// TAB SYSTEM
+// ===========================================================
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.abar-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  btn.classList.add('active');
+  currentTab = tab;
+}
+
+let currentTab = 'manual';
+
+function handleAnalyze() {
+  if(currentTab === 'import') {
+    applyImportAndAnalyze();
+  } else {
+    generateDashboard();
+    setTimeout(()=> document.getElementById('dashboardContent').scrollIntoView({behavior:'smooth'}), 100);
+  }
+}
+
+function enableExportButtons() {
+  ['btnExcel','btnCSV','btnPDF','btnClean'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('disabled');
+  });
+  // Update header status
+  const hs = document.getElementById('headerStatus');
+  if(hs) {
+    hs.innerHTML = `<i class="fa-solid fa-circle" style="font-size:0.5rem; margin-right:6px; color:#6ee7b7;"></i> <span style="color:#6ee7b7;">AKTIF</span>`;
+  }
+}
+
+// ===========================================================
+// SMART PARSER ENGINE v2 — Fixed Column Detection
+// Handles:
+//   FORMAT A (Admin): col C = Jumlah Operator (amount), col E = Nomor Rekening Pembayar (Minera ID)
+//   FORMAT B (QRIS):  col B = reference_no (Minera ID), col C = amount
+// ===========================================================
+const MINERA_REGEX = /minera\w+/i;
+
+/**
+ * Detect header row index and column mapping from a sheet's rows array.
+ * Returns { mineraCol, amountCol } as column indices (0-based), or null if not found.
+ */
+/**
+ * HEADER KEYWORD MAPS — expanded to catch any variation
+ */
+const MINERA_COL_KEYWORDS  = [
+  'reference_no', 'reference no', 'referenceno',
+  'nomor rekening pembayar', 'nomor rekening', 'rekening pembayar',
+  'no rekening', 'no. rekening',
+  'payment reference', 'ref no', 'ref_no',
+  'order id', 'orderid', 'order_id'
+];
+
+const AMOUNT_COL_KEYWORDS  = [
+  'jumlah operator', 'jumlah', 'amount', 'nominal', 'nilai',
+  'total', 'debit', 'kredit', 'nilai transaksi', 'trx amount',
+  'payment amount', 'nilai pembayaran'
+];
+
+/**
+ * Score how well a header cell matches a keyword list (0 = no match, higher = better)
+ */
+function headerScore(cell, keywords) {
+  const h = String(cell||'').toLowerCase().trim().replace(/\s+/g,' ');
+  for(const kw of keywords) {
+    if(h === kw)          return 3;  // exact match
+    if(h.includes(kw))   return 2;  // contains keyword
+    if(kw.includes(h) && h.length > 3) return 1; // keyword contains cell
+  }
+  return 0;
+}
+
+/**
+ * Detect header row and column positions.
+ * Scans the first 5 rows, scores every cell against keyword lists.
+ */
+function detectColumnMap(rows) {
+  for(let ri = 0; ri < Math.min(5, rows.length); ri++) {
+    const row = rows[ri];
+    if(!row || row.every(c => !c)) continue;
+
+    let bestMineraScore = 0, bestAmountScore = 0;
+    let mineraCol = -1, amountCol = -1;
+
+    for(let ci = 0; ci < row.length; ci++) {
+      const ms = headerScore(row[ci], MINERA_COL_KEYWORDS);
+      const as = headerScore(row[ci], AMOUNT_COL_KEYWORDS);
+      if(ms > bestMineraScore) { bestMineraScore = ms; mineraCol = ci; }
+      if(as > bestAmountScore) { bestAmountScore = as; amountCol = ci; }
+    }
+
+    if(mineraCol >= 0 && amountCol >= 0 && mineraCol !== amountCol) {
+      return { headerRow: ri, mineraCol, amountCol };
+    }
+  }
+  return null; // fallback to auto-scan
+}
+
+/**
+ * Auto-scan a single data row when no header is detected.
+ *
+ * RULES (based on real file formats):
+ *  - Minera cell: contains "Minera" text → that's the ID
+ *  - Amount cell: a SHORT pure-integer (≤ 10 digits, NOT a date-like long number)
+ *    that appears BEFORE the Minera column (Format Admin: C=amount, E=Minera)
+ *    OR immediately after (Format QRIS: B=Minera, C=amount)
+ *  - EXCLUDE cells that look like dates (contain "-", "/", or are > 10 digits after cleaning)
+ *  - EXCLUDE cells that look like account numbers (> 10 digits)
+ */
+function parseRowAutoScan(cells) {
+  let mineraIdx = -1;
+  let mineraId  = null;
+
+  // Step 1: find Minera cell
+  for(let i = 0; i < cells.length; i++) {
+    const s     = String(cells[i]||'').trim();
+    const match = s.match(MINERA_REGEX);
+    if(match) { mineraId = match[0]; mineraIdx = i; break; }
+  }
+
+  if(!mineraId) return { mineraId: null, amount: null };
+
+  // Step 2: find amount — strict filtering
+  const candidates = [];
+  for(let i = 0; i < cells.length; i++) {
+    if(i === mineraIdx) continue;
+    const s   = String(cells[i]||'').trim();
+    if(!s)    continue;
+
+    // Skip cells with date separators
+    if(s.includes('-') || s.includes('/') || s.includes(':')) continue;
+
+    // Strip non-numeric
+    const cleaned = s.replace(/[^0-9]/g, '');
+    if(!cleaned)  continue;
+
+    const num = parseInt(cleaned, 10);
+    if(num <= 0)  continue;
+
+    // Skip if too many digits — likely account/ref number (Minera IDs, phone, etc.)
+    // Real amounts in IDR: typically 4–9 digits (1000 to 999,999,999)
+    if(cleaned.length > 9) continue;
+
+    // Skip very small numbers that are likely row indices (1,2,3...)
+    if(num < 100) continue;
+
+    candidates.push({ idx: i, num, dist: Math.abs(i - mineraIdx) });
+  }
+
+  if(candidates.length === 0) return { mineraId, amount: null };
+
+  // Prefer cell closest to Minera (both before and after)
+  candidates.sort((a, b) => a.dist - b.dist);
+  return { mineraId, amount: candidates[0].num };
+}
+
+/**
+ * Parse raw text (paste from Excel, CSV, etc.)
+ */
+function parseTextData(text) {
+  const lines = text.trim().split('\n').filter(l => l.trim());
+  const results = [];
+
+  // First pass: split all lines into cell arrays
+  const allRows = lines.map(line => {
+    let cells;
+    if(line.includes('\t'))      cells = line.split('\t');
+    else if(line.includes(','))  cells = line.split(',');
+    else if(line.includes(';'))  cells = line.split(';');
+    else                         cells = line.split(/\s+/);
+    return cells.map(c => c.trim()).filter(c => c);
+  });
+
+  // Try to detect header row → use column map
+  const colMap = detectColumnMap(allRows);
+
+  if(colMap) {
+    // Structured: use known column positions
+    for(let ri = colMap.headerRow + 1; ri < allRows.length; ri++) {
+      const row      = allRows[ri];
+      const mineraRaw = String(row[colMap.mineraCol]||'').trim();
+      const match    = mineraRaw.match(MINERA_REGEX);
+      if(!match) continue;
+      const mineraId = match[0];
+      const amount   = parseFloat(String(row[colMap.amountCol]||'').replace(/[^0-9.]/g,'')) || 0;
+      results.push({ orderId: mineraId, amount, raw: row.join(' | ') });
+    }
+  } else {
+    // Fallback: auto-scan each row
+    for(let row of allRows) {
+      const { mineraId, amount } = parseRowAutoScan(row);
+      if(mineraId) results.push({ orderId: mineraId, amount: amount || 0, raw: row.join(' ') });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Parse XLSX / CSV file with SheetJS.
+ * Handles both Format A (Admin) and Format B (QRIS Transactions).
+ */
+async function parseFileData(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb   = XLSX.read(data, { type: 'array' });
+        const ws   = wb.Sheets[wb.SheetNames[0]];
+        // Keep raw rows with header:1 so we can detect columns properly
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+        const results = [];
+
+        // Detect header + column positions
+        const colMap = detectColumnMap(rows);
+
+        if(colMap) {
+          // Structured parse using detected columns
+          for(let ri = colMap.headerRow + 1; ri < rows.length; ri++) {
+            const row      = rows[ri];
+            if(!row || row.every(c => !c)) continue;
+
+            const mineraRaw = String(row[colMap.mineraCol]||'').trim();
+            const match     = mineraRaw.match(MINERA_REGEX);
+            if(!match) continue;
+
+            const mineraId = match[0];
+            const amtRaw   = String(row[colMap.amountCol]||'').replace(/[^0-9.]/g, '');
+            const amount   = parseFloat(amtRaw) || 0;
+
+            results.push({ orderId: mineraId, amount, raw: row.join(' | ') });
+          }
+        } else {
+          // Fallback: auto-scan every row
+          for(let row of rows) {
+            if(!row || row.every(c => !c)) continue;
+            const { mineraId, amount } = parseRowAutoScan(row);
+            if(mineraId) results.push({ orderId: mineraId, amount: amount || 0, raw: row.join(' | ') });
+          }
+        }
+
+        resolve(results);
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/**
+ * Wrapper: returns { data, format } for text input
+ */
+function parseTextDataWithFormat(text) {
+  const lines   = text.trim().split('\n').filter(l => l.trim());
+  const allRows = lines.map(line => {
+    let cells;
+    if(line.includes('\t'))      cells = line.split('\t');
+    else if(line.includes(','))  cells = line.split(',');
+    else if(line.includes(';'))  cells = line.split(';');
+    else                         cells = line.split(/\s+/);
+    return cells.map(c => c.trim()).filter(c => c);
+  });
+
+  const colMap = detectColumnMap(allRows);
+  let format   = 'Auto-Scan Mode';
+  const data   = [];
+
+  if(colMap) {
+    // Determine format label
+    const headers = allRows[colMap.headerRow].map(c => String(c||'').toLowerCase());
+    if(headers.some(h => h.includes('jumlah operator') || h.includes('nomor rekening'))) format = 'Format Admin (Jumlah Operator + Nomor Rekening)';
+    else if(headers.some(h => h.includes('reference_no') || h.includes('reference no'))) format = 'Format QRIS (reference_no + amount)';
+    else format = 'Header Detected (Auto-Mapped)';
+
+    for(let ri = colMap.headerRow + 1; ri < allRows.length; ri++) {
+      const row      = allRows[ri];
+      const mineraRaw = String(row[colMap.mineraCol]||'').trim();
+      const match    = mineraRaw.match(MINERA_REGEX);
+      if(!match) continue;
+      const mineraId = match[0];
+      const amount   = parseFloat(String(row[colMap.amountCol]||'').replace(/[^0-9.]/g,'')) || 0;
+      data.push({ orderId: mineraId, amount, raw: row.join(' | ') });
+    }
+  } else {
+    for(let row of allRows) {
+      const { mineraId, amount } = parseRowAutoScan(row);
+      if(mineraId) data.push({ orderId: mineraId, amount: amount || 0, raw: row.join(' ') });
+    }
+  }
+
+  return { data, format };
+}
+
+/**
+ * Wrapper: returns { data, format } for file input
+ */
+async function parseFileDataWithFormat(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const bytes = new Uint8Array(e.target.result);
+        const wb    = XLSX.read(bytes, { type: 'array' });
+        const ws    = wb.Sheets[wb.SheetNames[0]];
+        const rows  = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+        const colMap = detectColumnMap(rows);
+        let format   = 'Auto-Scan Mode';
+        const data   = [];
+
+        if(colMap) {
+          const headers = rows[colMap.headerRow].map(c => String(c||'').toLowerCase());
+          if(headers.some(h => h.includes('jumlah operator') || h.includes('nomor rekening'))) format = 'Format Admin (Jumlah Operator + Nomor Rekening)';
+          else if(headers.some(h => h.includes('reference_no') || h.includes('reference no'))) format = 'Format QRIS Transaksi (reference_no + amount)';
+          else format = 'Header Detected (Auto-Mapped)';
+
+          for(let ri = colMap.headerRow + 1; ri < rows.length; ri++) {
+            const row = rows[ri];
+            if(!row || row.every(c => !c)) continue;
+            const mineraRaw = String(row[colMap.mineraCol]||'').trim();
+            const match     = mineraRaw.match(MINERA_REGEX);
+            if(!match) continue;
+            const mineraId  = match[0];
+            const amount    = parseFloat(String(row[colMap.amountCol]||'').replace(/[^0-9.]/g,'')) || 0;
+            data.push({ orderId: mineraId, amount, raw: row.join(' | ') });
+          }
+        } else {
+          for(let row of rows) {
+            if(!row || row.every(c => !c)) continue;
+            const { mineraId, amount } = parseRowAutoScan(row);
+            if(mineraId) data.push({ orderId: mineraId, amount: amount || 0, raw: row.join(' | ') });
+          }
+        }
+
+        resolve({ data, format });
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+let importedAdmin = [];
+let importedQris  = [];
+
+// Progress animation
+function animateProgress(type, label, onDone) {
+  const wrapper = document.getElementById(type+'Progress');
+  const fill    = document.getElementById(type+'ProgressFill');
+  const pctEl   = document.getElementById(type+'ProgressPct');
+  const lblEl   = document.getElementById(type+'ProgressLabel');
+  
+  wrapper.style.display = 'block';
+  lblEl.textContent = label;
+  let pct = 0;
+  const interval = setInterval(() => {
+    pct = Math.min(pct + Math.random()*15+5, 95);
+    fill.style.width = pct+'%';
+    pctEl.textContent = Math.round(pct)+'%';
+  }, 120);
+
+  setTimeout(() => {
+    clearInterval(interval);
+    fill.style.width = '100%';
+    pctEl.textContent = '100%';
+    lblEl.textContent = 'Selesai!';
+    setTimeout(() => { wrapper.style.display='none'; fill.style.width='0%'; onDone(); }, 400);
+  }, 1400);
+}
+
+async function handleFileUpload(event, type) {
+  const file = event.target.files[0];
+  if(!file) return;
+  animateProgress(type, `Membaca ${file.name}...`, async () => {
+    const { data, format } = await parseFileDataWithFormat(file);
+    if(type==='admin') importedAdmin=data; else importedQris=data;
+    renderPreview(type, data, format);
+    checkImportReady();
+  });
+}
+
+function handleDragOver(e, zoneId) { e.preventDefault(); document.getElementById(zoneId).classList.add('dragover'); }
+function handleDragLeave(zoneId)   { document.getElementById(zoneId).classList.remove('dragover'); }
+function handleDrop(e, type) {
+  e.preventDefault();
+  const zoneId = type+'DropZone';
+  document.getElementById(zoneId).classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if(!file) return;
+  animateProgress(type, `Membaca ${file.name}...`, async () => {
+    const { data, format } = await parseFileDataWithFormat(file);
+    if(type==='admin') importedAdmin=data; else importedQris=data;
+    renderPreview(type, data, format);
+    checkImportReady();
+  });
+}
+
+function onPaste(type) {
+  const text = document.getElementById(type+'PasteArea').value;
+  if(!text.trim()) return;
+  animateProgress(type, 'Menganalisa data...', () => {
+    const { data, format } = parseTextDataWithFormat(text);
+    if(type==='admin') importedAdmin=data; else importedQris=data;
+    renderPreview(type, data, format);
+    checkImportReady();
+  });
+}
+
+// ===========================================================
+// RENDER PREVIEW
+// ===========================================================
+function renderPreview(type, data, detectedFormat) {
+  const wrapper = document.getElementById(type+'PreviewWrapper');
+  const tbody   = document.getElementById(type+'PreviewBody');
+  const statsEl = document.getElementById(type+'PreviewStats');
+  const errEl   = document.getElementById(type+'ValErrors');
+  
+  wrapper.style.display = 'block';
+
+  // Detect duplicates
+  const idCount = {};
+  data.forEach(d => { idCount[d.orderId] = (idCount[d.orderId]||0)+1; });
+
+  let valid=0, invalid=0, dup=0;
+  let errors = [];
+  let html = '';
+
+  data.forEach((row, i) => {
+    const isDup    = idCount[row.orderId] > 1;
+    const hasAmt   = row.amount > 0;
+    const isValid  = hasAmt && !isDup;
+
+    if(isDup)       { dup++;     if(!errors.find(e=>e===`Duplikat: ${row.orderId}`)) errors.push(`Duplikat ID terdeteksi: ${row.orderId}`); }
+    if(!hasAmt)     { invalid++; errors.push(`Baris ${i+1}: Nominal tidak terdeteksi — "${row.raw}"`); }
+    if(isValid)     { valid++; }
+
+    const rowClass = isDup ? '' : (!hasAmt ? 'row-invalid' : 'row-matched');
+    let badge;
+    if(!hasAmt)     badge = `<span class="row-badge rb-invalid">INVALID</span>`;
+    else if(isDup)  badge = `<span class="row-badge rb-dup">DUPLIKAT</span>`;
+    else            badge = `<span class="row-badge rb-valid">VALID</span>`;
+
+    html += `<tr class="${rowClass}">
+      <td class="mono" style="color:rgba(245,230,211,0.4); font-size:0.8rem;">${i+1}</td>
+      <td class="cell-minera">${row.orderId}</td>
+      <td class="cell-amount">${hasAmt ? formatCurrency(row.amount) : '<span class="cell-invalid">Tidak terdeteksi</span>'}</td>
+      <td>${badge}</td>
+    </tr>`;
+  });
+
+  if(!data.length) {
+    html = `<tr><td colspan="4" style="text-align:center;padding:30px;">
+      <div style="color:#fca5a5;font-style:italic;margin-bottom:12px;">
+        <i class="fa-solid fa-triangle-exclamation"></i> Tidak ada data Minera yang terdeteksi.
+      </div>
+      <div style="font-size:0.8rem;color:rgba(212,175,55,0.7);font-family:'JetBrains Mono',monospace;text-align:left;padding:10px;background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.2);">
+        <b style="color:var(--gold-light);">Pastikan:</b><br>
+        • Baris pertama adalah header (Akun pemain, Tanggal, Jumlah Operator, ...)<br>
+        • Kolom nominal: <b>Jumlah Operator</b> (angka saja, tanpa teks)<br>
+        • Kolom ID: <b>Nomor Rekening Pembayar</b> (berisi "Minera...")<br>
+        • File tidak terproteksi / ter-encrypt
+      </div>
+    </td></tr>`;
+  }
+
+  tbody.innerHTML = html;
+
+  const fmtLabel = detectedFormat || 'Auto-Scan';
+  statsEl.innerHTML = `
+    <span class="preview-badge" style="border-color:rgba(167,139,250,0.6);color:#c4b5fd;background:rgba(167,139,250,0.1);font-size:0.72rem;">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> ${fmtLabel}
+    </span>
+    <span class="preview-badge pb-valid"><i class="fa-solid fa-check"></i> ${valid} Valid</span>
+    ${invalid ? `<span class="preview-badge pb-invalid"><i class="fa-solid fa-xmark"></i> ${invalid} Invalid</span>` : ''}
+    ${dup ? `<span class="preview-badge pb-dup"><i class="fa-solid fa-copy"></i> ${dup} Duplikat</span>` : ''}
+  `;
+
+  if(errors.length) {
+    errEl.style.display='block';
+    errEl.innerHTML = errors.slice(0,5).map(e=>`<div class="val-error-item"><i class="fa-solid fa-circle-exclamation"></i>${e}</div>`).join('');
+  } else {
+    errEl.style.display='none';
+  }
+}
+
+function checkImportReady() {
+  const hasAdmin = importedAdmin.length > 0;
+  const hasQris  = importedQris.length > 0;
+  const el = document.getElementById('importActions');
+  if(el) el.style.display = (hasAdmin || hasQris) ? 'flex' : 'none';
+}
+
+function applyImportAndAnalyze() {
+  // Sync imported data to textareas
+  const adminText = importedAdmin.map(d=>`${d.orderId} ${d.amount}`).join('\n');
+  const qrisText  = importedQris.map(d=>`${d.orderId} ${d.amount}`).join('\n');
+  
+  if(adminText) document.getElementById('adminData').value = adminText;
+  if(qrisText)  document.getElementById('qrisData').value  = qrisText;
+  
+  // Switch to result
+  generateDashboard();
+  document.getElementById('dashboardContent').scrollIntoView({behavior:'smooth'});
+}
+
+// ===========================================================
+// MAIN DASHBOARD LOGIC (ORIGINAL — PRESERVED)
+// ===========================================================
 let chartInstance = null;
 let dashboardData = [];
 
 function formatCurrency(amount) {
-  if (amount === null || isNaN(amount)) return '-';
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0
-  }).format(amount);
+  if(amount===null||isNaN(amount)) return '-';
+  return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(amount);
 }
 
-// PARSING DATA (MASIH MENGGUNAKAN SPASI)
 function parseDataInput(text) {
-  return text.trim().split('\n').filter(line => line.trim()).map(line => {
+  return text.trim().split('\n').filter(line=>line.trim()).map(line => {
     const parts = line.trim().split(/\s+/);
-    const orderId = parts[0]; 
-    const amount = parseFloat(parts.slice(1).join('').replace(/[^0-9.]/g, '')) || 0;
+    const orderId = parts[0];
+    const amount  = parseFloat(parts.slice(1).join('').replace(/[^0-9.]/g,'')) || 0;
     return { orderId, amount };
   });
 }
@@ -788,248 +1638,179 @@ function parseDataInput(text) {
 function generateDashboard() {
   document.getElementById('dashboardContent').classList.remove('hidden');
   
-  const dash = document.getElementById('dashboardContent');
-  if (!dash.classList.contains('scrolled')) {
-      setTimeout(() => {
-          dash.scrollIntoView({behavior: 'smooth', block: 'start'});
-          dash.classList.add('scrolled');
-      }, 100);
-  }
-
   const adminEntries = parseDataInput(document.getElementById('adminData').value);
-  const qrisEntries = parseDataInput(document.getElementById('qrisData').value);
+  const qrisEntries  = parseDataInput(document.getElementById('qrisData').value);
 
-  const adminMap = new Map(adminEntries.map(e => [e.orderId, e.amount]));
-  const qrisMap = new Map(qrisEntries.map(e => [e.orderId, e.amount]));
+  const adminMap = new Map(adminEntries.map(e=>[e.orderId,e.amount]));
+  const qrisMap  = new Map(qrisEntries.map(e=>[e.orderId,e.amount]));
 
-  const allOrderIds = new Set([...adminMap.keys(), ...qrisMap.keys()]);
+  const allOrderIds = new Set([...adminMap.keys(),...qrisMap.keys()]);
 
   dashboardData = [];
   allOrderIds.forEach(orderId => {
     const adminAmount = adminMap.get(orderId) ?? null;
-    const qrisAmount = qrisMap.get(orderId) ?? null;
-
+    const qrisAmount  = qrisMap.get(orderId)  ?? null;
     let status, selisih = null;
 
-    if (adminAmount !== null && qrisAmount !== null) {
+    if(adminAmount!==null && qrisAmount!==null) {
       selisih = adminAmount - qrisAmount;
-      status = adminAmount === qrisAmount ? 'KLOP' : 'BEDA';
-    } else if (adminAmount !== null) {
-      status = 'HILANG DI QRIS';
-      selisih = adminAmount; // Hitung sebagai selisih positif (kehilangan)
+      status  = adminAmount===qrisAmount ? 'KLOP' : 'BEDA';
+    } else if(adminAmount!==null) {
+      status  = 'HILANG DI QRIS';
+      selisih = adminAmount;
     } else {
-      status = 'HILANG DI ADMIN';
-      selisih = -qrisAmount; // Hitung sebagai selisih negatif (kelebihan)
+      status  = 'HILANG DI ADMIN';
+      selisih = -qrisAmount;
     }
 
     dashboardData.push({ orderId, adminAmount, qrisAmount, selisih, status });
   });
 
-  dashboardData.sort((a, b) => {
-    const priority = { 'HILANG DI QRIS': 1, 'HILANG DI ADMIN': 1, 'BEDA': 2, 'KLOP': 3 };
-    return (priority[a.status] || 99) - (priority[b.status] || 99);
+  dashboardData.sort((a,b)=>{
+    const p = {'HILANG DI QRIS':1,'HILANG DI ADMIN':1,'BEDA':2,'KLOP':3};
+    return (p[a.status]||99)-(p[b.status]||99);
   });
 
   renderDashboard(qrisEntries);
 }
 
 function renderDashboard(qrisEntries) {
-  const klop = dashboardData.filter(e => e.status === 'KLOP').length;
-  const beda = dashboardData.filter(e => e.status === 'BEDA').length;
-  const hilangQris = dashboardData.filter(e => e.status === 'HILANG DI QRIS').length;
-  const hilangAdmin = dashboardData.filter(e => e.status === 'HILANG DI ADMIN').length;
+  const klop       = dashboardData.filter(e=>e.status==='KLOP').length;
+  const beda       = dashboardData.filter(e=>e.status==='BEDA').length;
+  const hilangQris = dashboardData.filter(e=>e.status==='HILANG DI QRIS').length;
+  const hilangAdmin= dashboardData.filter(e=>e.status==='HILANG DI ADMIN').length;
 
-  const totalPendapatan = qrisEntries.reduce((sum, e) => sum + e.amount, 0);
-  const biayaQris = totalPendapatan * 0.007; 
+  const totalPendapatan = qrisEntries.reduce((s,e)=>s+e.amount,0);
+  const biayaQris = totalPendapatan*0.007;
 
-  const totalSelisih = dashboardData.reduce((sum, e) => {
-    if (e.status === 'BEDA' && e.selisih !== null) return sum + Math.abs(e.selisih);
-    if (e.status === 'HILANG DI QRIS' && e.adminAmount !== null) return sum + e.adminAmount;
-    if (e.status === 'HILANG DI ADMIN' && e.qrisAmount !== null) return sum + e.qrisAmount;
+  const totalSelisih = dashboardData.reduce((sum,e)=>{
+    if(e.status==='BEDA'&&e.selisih!==null)             return sum+Math.abs(e.selisih);
+    if(e.status==='HILANG DI QRIS'&&e.adminAmount!==null)return sum+e.adminAmount;
+    if(e.status==='HILANG DI ADMIN'&&e.qrisAmount!==null)return sum+e.qrisAmount;
     return sum;
-  }, 0);
+  },0);
 
   document.getElementById('statRevenue').textContent = formatCurrency(totalPendapatan);
-  document.getElementById('statMatch').textContent = klop;
-  document.getElementById('statDiff').textContent = formatCurrency(totalSelisih);
-  document.getElementById('statMDR').textContent = formatCurrency(biayaQris);
+  document.getElementById('statMatch').textContent   = klop;
+  document.getElementById('statDiff').textContent    = formatCurrency(totalSelisih);
+  document.getElementById('statMDR').textContent     = formatCurrency(biayaQris);
 
-  const missingInQris = dashboardData.filter(e => e.status === 'HILANG DI QRIS');
-  const largeDiscrepancy = dashboardData.filter(e => e.status === 'BEDA' && Math.abs(e.selisih) > 10000);
+  const missingInQris    = dashboardData.filter(e=>e.status==='HILANG DI QRIS');
+  const largeDiscrepancy = dashboardData.filter(e=>e.status==='BEDA'&&Math.abs(e.selisih)>10000);
 
   let alertHTML = '';
-  
-  if (missingInQris.length > 0) {
-    alertHTML += `
-      <div class="custom-alert alert-danger">
-        <i class="fa-solid fa-circle-xmark"></i>
-        <div>
-          <strong>${missingInQris.length} Data Hilang di QRIS</strong>
-        </div>
-      </div>`;
-  }
-
-  if (largeDiscrepancy.length > 0) {
-    alertHTML += `
-      <div class="custom-alert alert-warning">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        <div>
-          <strong>${largeDiscrepancy.length} Transaksi Selisih Besar</strong>
-        </div>
-      </div>`;
-  }
-
-  if (!alertHTML) {
-    alertHTML = `
-      <div class="custom-alert alert-success">
-        <i class="fa-solid fa-circle-check"></i>
-        <div><strong>Semua Sistem Normal</strong></div>
-      </div>`;
-  }
+  if(missingInQris.length>0) alertHTML += `<div class="custom-alert alert-danger"><i class="fa-solid fa-circle-xmark"></i><div><strong>${missingInQris.length} Data Hilang di QRIS</strong></div></div>`;
+  if(largeDiscrepancy.length>0) alertHTML += `<div class="custom-alert alert-warning"><i class="fa-solid fa-triangle-exclamation"></i><div><strong>${largeDiscrepancy.length} Transaksi Selisih Besar</strong></div></div>`;
+  if(!alertHTML) alertHTML = `<div class="custom-alert alert-success"><i class="fa-solid fa-circle-check"></i><div><strong>Semua Sistem Normal</strong></div></div>`;
   document.getElementById('alertSection').innerHTML = alertHTML;
 
   renderChart(klop, beda, hilangQris, hilangAdmin);
-  
-  document.getElementById('btnCSV').style.display = 'inline-flex';
-  document.getElementById('btnPDF').style.display = 'inline-flex';
-  document.getElementById('btnExcel').style.display = 'inline-flex';
-
+  enableExportButtons();
   applyFilters();
 }
 
 function renderChart(klop, beda, hilangQris, hilangAdmin) {
-  const ctx = document.getElementById('statusChart').getContext('2d');
-  
-  if (chartInstance) chartInstance.destroy();
-
-  chartInstance = new Chart(ctx, {
+  const c = document.getElementById('statusChart').getContext('2d');
+  if(chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(c, {
     type: 'doughnut',
     data: {
-      labels: ['KLOP', 'BEDA', 'HILANG'],
+      labels: ['KLOP','BEDA','HILANG'],
       datasets: [{
-        data: [klop, beda, hilangQris + hilangAdmin],
-        backgroundColor: [
-          'rgba(110, 231, 183, 0.8)',
-          'rgba(212, 175, 55, 0.8)',
-          'rgba(252, 165, 165, 0.8)'
-        ],
-        borderColor: [
-          '#10b981',
-          '#D4AF37',
-          '#ef4444'
-        ],
-        borderWidth: 2,
-        hoverOffset: 15
+        data: [klop,beda,hilangQris+hilangAdmin],
+        backgroundColor: ['rgba(110,231,183,0.8)','rgba(212,175,55,0.8)','rgba(252,165,165,0.8)'],
+        borderColor: ['#10b981','#D4AF37','#ef4444'],
+        borderWidth: 2, hoverOffset: 15
       }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive:true, maintainAspectRatio:false,
       plugins: {
-        legend: { 
-          position: 'right', 
-          labels: { 
-            color: '#F5E6D3', 
-            boxWidth: 15,
-            font: {
-              family: "'Cinzel', serif",
-              size: 12
-            },
-            padding: 15
-          } 
-        }
+        legend: { position:'right', labels:{ color:'#F5E6D3', boxWidth:15, font:{family:"'Cinzel',serif",size:12}, padding:15 } }
       },
-      cutout: '65%',
+      cutout: '65%'
     }
   });
 }
 
 function applyFilters() {
-  const searchTerm = document.getElementById('searchOrderId').value;
-  const minNom = parseFloat(document.getElementById('minNominal').value) || null;
-  const maxNom = parseFloat(document.getElementById('maxNominal').value) || null;
+  const searchTerm   = document.getElementById('searchOrderId').value;
+  const minNom       = parseFloat(document.getElementById('minNominal').value) || null;
+  const maxNom       = parseFloat(document.getElementById('maxNominal').value) || null;
   const statusFilter = document.getElementById('statusFilter').value;
 
   const filtered = dashboardData.filter(entry => {
-    if (searchTerm && !entry.orderId.includes(searchTerm)) return false;
-    if (statusFilter !== 'all' && entry.status !== statusFilter) return false;
-    
-    const amount = entry.adminAmount ?? entry.qrisAmount ?? 0;
-    if (minNom !== null && amount < minNom) return false;
-    if (maxNom !== null && amount > maxNom) return false;
-    
+    if(searchTerm && !entry.orderId.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    if(statusFilter!=='all' && entry.status!==statusFilter) return false;
+    const amount = entry.adminAmount??entry.qrisAmount??0;
+    if(minNom!==null && amount<minNom) return false;
+    if(maxNom!==null && amount>maxNom) return false;
     return true;
   });
 
-  const totalSelisih = filtered.reduce((sum, e) => {
-    if (e.status === 'BEDA' && e.selisih !== null) return sum + Math.abs(e.selisih);
-    if (e.status === 'HILANG DI QRIS' && e.adminAmount !== null) return sum + e.adminAmount;
-    if (e.status === 'HILANG DI ADMIN' && e.qrisAmount !== null) return sum + e.qrisAmount;
+  const totalSelisih = filtered.reduce((sum,e)=>{
+    if(e.status==='BEDA'&&e.selisih!==null)             return sum+Math.abs(e.selisih);
+    if(e.status==='HILANG DI QRIS'&&e.adminAmount!==null)return sum+e.adminAmount;
+    if(e.status==='HILANG DI ADMIN'&&e.qrisAmount!==null)return sum+e.qrisAmount;
     return sum;
-  }, 0);
+  },0);
 
   document.getElementById('totalSelisihDisplay').textContent = formatCurrency(totalSelisih);
 
+  // Sync set for "Matched" tagging
+  const adminIds = new Set(dashboardData.filter(d=>d.adminAmount!==null).map(d=>d.orderId));
+
   let tableHTML = '';
-  if (filtered.length === 0) {
-    tableHTML = `<tr><td colspan="5" class="text-center" style="padding: 50px; color: var(--text-gold);">Data tidak ditemukan</td></tr>`;
+  if(!filtered.length) {
+    tableHTML = `<tr><td colspan="5" class="text-center" style="padding:50px; color:var(--text-gold);">Data tidak ditemukan</td></tr>`;
   } else {
     filtered.forEach(entry => {
       let badgeClass = 'badge-success';
-      
-      if (entry.status === 'BEDA') { badgeClass = 'badge-warning'; }
-      if (entry.status.includes('HILANG')) { badgeClass = 'badge-danger'; }
+      if(entry.status==='BEDA') badgeClass='badge-warning';
+      if(entry.status.includes('HILANG')) badgeClass='badge-danger';
 
-      tableHTML += `
-        <tr onclick="openDrawer('${entry.orderId}')">
-          <td class="mono" style="font-weight: 600;">${entry.orderId}</td>
-          <td class="text-right mono">${entry.adminAmount !== null ? formatCurrency(entry.adminAmount) : '-'}</td>
-          <td class="text-right mono">${entry.qrisAmount !== null ? formatCurrency(entry.qrisAmount) : '-'}</td>
-          <td class="text-right mono" style="color: ${entry.selisih < 0 ? '#fca5a5' : (entry.selisih > 0 ? '#fbbf24' : 'inherit')}">
-            ${entry.selisih !== null ? formatCurrency(entry.selisih) : '-'}
-          </td>
-          <td class="text-center"><span class="badge ${badgeClass}">${entry.status}</span></td>
-        </tr>
-      `;
+      tableHTML += `<tr onclick="openDrawer('${entry.orderId}')">
+        <td class="mono" style="font-weight:600;">${entry.orderId}</td>
+        <td class="text-right mono">${entry.adminAmount!==null?formatCurrency(entry.adminAmount):'-'}</td>
+        <td class="text-right mono">${entry.qrisAmount!==null?formatCurrency(entry.qrisAmount):'-'}</td>
+        <td class="text-right mono" style="color:${entry.selisih<0?'#fca5a5':(entry.selisih>0?'#fbbf24':'inherit')}">
+          ${entry.selisih!==null?formatCurrency(entry.selisih):'-'}
+        </td>
+        <td class="text-center"><span class="badge ${badgeClass}">${entry.status}</span></td>
+      </tr>`;
     });
   }
 
   document.getElementById('tableBody').innerHTML = tableHTML;
 }
 
-// --- 3. Interactive Features (Drawer) ---
-
+// ===========================================================
+// DETAIL DRAWER
+// ===========================================================
 function openDrawer(orderId) {
-  const entry = dashboardData.find(e => e.orderId === orderId);
-  if (!entry) return;
-
+  const entry = dashboardData.find(e=>e.orderId===orderId);
+  if(!entry) return;
   document.getElementById('drawerOrderId').textContent = entry.orderId;
-  document.getElementById('drawerAdmin').textContent = entry.adminAmount !== null ? formatCurrency(entry.adminAmount) : 'Tidak Ada';
-  document.getElementById('drawerQris').textContent = entry.qrisAmount !== null ? formatCurrency(entry.qrisAmount) : 'Tidak Ada';
-  document.getElementById('drawerDiff').textContent = entry.selisih !== null ? formatCurrency(entry.selisih) : '-';
-  
+  document.getElementById('drawerAdmin').textContent   = entry.adminAmount!==null ? formatCurrency(entry.adminAmount) : 'Tidak Ada';
+  document.getElementById('drawerQris').textContent    = entry.qrisAmount!==null  ? formatCurrency(entry.qrisAmount)  : 'Tidak Ada';
+  document.getElementById('drawerDiff').textContent    = entry.selisih!==null ? formatCurrency(entry.selisih) : '-';
   document.getElementById('detailDrawer').classList.add('active');
 }
 
-function closeDrawer() {
-  document.getElementById('detailDrawer').classList.remove('active');
-}
+function closeDrawer() { document.getElementById('detailDrawer').classList.remove('active'); }
 
 document.addEventListener('click', function(event) {
   const drawer = document.getElementById('detailDrawer');
-  if (!drawer.contains(event.target) && !event.target.closest('tr')) {
-    closeDrawer();
-  }
+  if(!drawer.contains(event.target) && !event.target.closest('tr')) closeDrawer();
 });
 
-// --- 4. Export Functions (Excel, CSV, PDF) ---
-
+// ===========================================================
+// EXPORT FUNCTIONS
+// ===========================================================
 function exportCSV() {
   let csv = 'Order ID,Admin,QRIS,Selisih,Status\n';
-  dashboardData.forEach(entry => {
-    csv += `${entry.orderId},${entry.adminAmount ?? '-'},${entry.qrisAmount ?? '-'},${entry.selisih ?? '-'},${entry.status}\n`;
-  });
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  dashboardData.forEach(e => { csv+=`${e.orderId},${e.adminAmount??'-'},${e.qrisAmount??'-'},${e.selisih??'-'},${e.status}\n`; });
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = `Laporan-QRIS-${new Date().toISOString().split('T')[0]}.csv`;
@@ -1039,114 +1820,79 @@ function exportCSV() {
 function exportPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
-  doc.setTextColor(92, 10, 10); 
-  doc.text('Laporan Rekonsiliasi QRIS', 14, 20);
-  
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0);
-  doc.text(`Tanggal: ${new Date().toLocaleString('id-ID')}`, 14, 28);
+  doc.setFont("helvetica","bold"); doc.setFontSize(20); doc.setTextColor(92,10,10);
+  doc.text('Laporan Rekonsiliasi QRIS',14,20);
+  doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(0,0,0);
+  doc.text(`Tanggal: ${new Date().toLocaleString('id-ID')}`,14,28);
 
   let y = 40;
-  const klop = dashboardData.filter(e => e.status === 'KLOP').length;
-  const beda = dashboardData.filter(e => e.status === 'BEDA').length;
-  const hilang = dashboardData.filter(e => e.status.includes('HILANG')).length;
+  const klop   = dashboardData.filter(e=>e.status==='KLOP').length;
+  const beda   = dashboardData.filter(e=>e.status==='BEDA').length;
+  const hilang = dashboardData.filter(e=>e.status.includes('HILANG')).length;
+  doc.text(`KLOP: ${klop} | BEDA: ${beda} | MISSING: ${hilang}`,14,y); y+=15;
+  doc.text('Detail Transaksi:',14,y); y+=10;
 
-  doc.text(`KLOP: ${klop} | BEDA: ${beda} | MISSING: ${hilang}`, 14, y);
-  y += 15;
-
-  doc.text('Detail Transaksi:', 14, y);
-  y += 10;
-
-  dashboardData.slice(0, 30).forEach(entry => {
-    doc.text(`${entry.orderId} | ${entry.adminAmount} | ${entry.qrisAmount} | ${entry.status}`, 14, y);
-    y += 6;
-    if(y > 270) { doc.addPage(); y = 20; }
+  dashboardData.slice(0,30).forEach(entry => {
+    doc.text(`${entry.orderId} | ${entry.adminAmount} | ${entry.qrisAmount} | ${entry.status}`,14,y);
+    y+=6; if(y>270){doc.addPage();y=20;}
   });
-
   doc.save(`Rekon-QRIS-${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
 function exportExcel() {
-  const ws = XLSX.utils.json_to_sheet(dashboardData.map(e => ({
-    "Order ID": e.orderId,
-    "Nominal Admin": e.adminAmount,
-    "Nominal QRIS": e.qrisAmount,
-    "Selisih": e.selisih,
-    "Status": e.status
+  const ws = XLSX.utils.json_to_sheet(dashboardData.map(e=>({
+    "Order ID":e.orderId,"Nominal Admin":e.adminAmount,"Nominal QRIS":e.qrisAmount,
+    "Selisih":e.selisih,"Status":e.status
   })));
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Rekonsiliasi");
-  XLSX.writeFile(wb, `Data-QRIS-${new Date().toISOString().split('T')[0]}.xlsx`);
+  XLSX.utils.book_append_sheet(wb,ws,"Rekonsiliasi");
+  XLSX.writeFile(wb,`Data-QRIS-${new Date().toISOString().split('T')[0]}.xlsx`);
 }
-// ====== ANTI VIEW SOURCE & INSPECT PROTECTION ======
 
-// Block Ctrl+U, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+S, F12
-document.addEventListener("keydown", function (e) {
-    // Ctrl+U (View Source)
-    if (e.ctrlKey && e.key.toLowerCase() === "u") {
-        e.preventDefault();
-        return false;
-    }
+function exportCleanScript() {
+  const out = dashboardData.map(e=>`Reference: ${e.orderId}
+Amount: ${e.adminAmount??e.qrisAmount??0}
+Method: QRIS
+Status: ${e.status==='KLOP'?'Success':(e.status==='BEDA'?'Discrepancy':'Missing')}
+---`).join('\n');
+  
+  document.getElementById('cleanScriptPre').textContent = out;
+  const el = document.getElementById('cleanScriptOutput');
+  el.style.display = 'block';
+  el.scrollIntoView({behavior:'smooth'});
+}
 
-    // Ctrl+Shift+I (Inspect)
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i") {
-        e.preventDefault();
-        return false;
-    }
+function copyCleanScript() {
+  const text = document.getElementById('cleanScriptPre').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = event.target.closest('button');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+    setTimeout(()=>btn.innerHTML=orig, 2000);
+  });
+}
 
-    // Ctrl+Shift+J (Console)
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "j") {
-        e.preventDefault();
-        return false;
-    }
-
-    // Ctrl+S (Save Page)
-    if (e.ctrlKey && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        return false;
-    }
-
-    // F12 (DevTools)
-    if (e.key === "F12") {
-        e.preventDefault();
-        return false;
-    }
+// ===========================================================
+// SECURITY PROTECTION (ORIGINAL)
+// ===========================================================
+document.addEventListener("keydown", function(e) {
+  if(e.ctrlKey && e.key.toLowerCase()==='u'){e.preventDefault();return false;}
+  if(e.ctrlKey && e.shiftKey && e.key.toLowerCase()==='i'){e.preventDefault();return false;}
+  if(e.ctrlKey && e.shiftKey && e.key.toLowerCase()==='j'){e.preventDefault();return false;}
+  if(e.ctrlKey && e.key.toLowerCase()==='s'){e.preventDefault();return false;}
+  if(e.key==='F12'){e.preventDefault();return false;}
 });
 
-// Block Klik Kanan (Right Click)
-document.addEventListener("contextmenu", function (e) {
-    e.preventDefault();
-});
+document.addEventListener("contextmenu", function(e){ e.preventDefault(); });
 
-// Deteksi DevTools terbuka (bonus proteksi)
-(function () {
-    function detectDevTools() {
-        const threshold = 160;
-        if (
-            window.outerWidth - window.innerWidth > threshold ||
-            window.outerHeight - window.innerHeight > threshold
-        ) {
-            document.body.innerHTML = `
-                <div style="
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    height:100vh;
-                    background:#0f0505;
-                    color:#D4AF37;
-                    font-family:monospace;
-                    font-size:24px;
-                    text-align:center;">
-                    Developer Tools Terdeteksi<br>Akses Diblokir
-                </div>
-            `;
-        }
+(function(){
+  function detectDevTools(){
+    const threshold=160;
+    if(window.outerWidth-window.innerWidth>threshold||window.outerHeight-window.innerHeight>threshold){
+      document.body.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0f0505;color:#D4AF37;font-family:monospace;font-size:24px;text-align:center;">Developer Tools Terdeteksi<br>Akses Diblokir</div>`;
     }
-    setInterval(detectDevTools, 1000);
+  }
+  setInterval(detectDevTools,1000);
 })();
 </script>
 </body>
