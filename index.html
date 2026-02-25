@@ -956,7 +956,7 @@ Minera004 200000</textarea>
       <div class="glass-panel stat-card">
         <h3>Biaya MDR</h3>
         <div class="value" style="color:var(--gold-rich);" id="statMDR">Rp 0</div>
-        <div class="description">0.7% (Estimasi)</div>
+        <div class="description">1.2% (Estimasi)</div>
       </div>
     </div>
 
@@ -1681,7 +1681,7 @@ function renderDashboard(qrisEntries) {
   const hilangAdmin= dashboardData.filter(e=>e.status==='HILANG DI ADMIN').length;
 
   const totalPendapatan = qrisEntries.reduce((s,e)=>s+e.amount,0);
-  const biayaQris = totalPendapatan*0.007;
+  const biayaQris = totalPendapatan*0.012;
 
   const totalSelisih = dashboardData.reduce((sum,e)=>{
     if(e.status==='BEDA'&&e.selisih!==null)             return sum+Math.abs(e.selisih);
